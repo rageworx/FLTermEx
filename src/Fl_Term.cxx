@@ -1102,8 +1102,9 @@ void Fl_Term::save(const char *fn)
 		}
 		fclose(fp);
 		char msg[256];
-		sprintf(msg, "\r\n\033[32m***%d bytes saved to %s***\03337m\r\n",
-				cursor_x, fn);
+		snprintf(msg, 256,
+                 "\r\n\033[32m***%d bytes saved to %s***\03337m\r\n",
+				 cursor_x, fn);
 		disp(msg);
 	}
 }

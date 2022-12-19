@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="0.9">
+    <dict>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+
+	<key>CFBundleExecutable</key>
+	<string>FLTermEx</string>
+
+	<key>CFBundleIdentifier</key>
+	<string>com.rageworx.FLTermEx</string>
+
+	<key>CFBundleVersion</key>
+	<string>--VER_LONG--</string>
+
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright 2022 by Raphael Kim</string>
+
+	<key>CFBundleName</key>
+	<string>Fast Light Terminal</string>
+
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<key>CFBundleSignature</key>
+	<string>FLTERMEX</string>
+
+	<key>CFBundleIconFile</key>
+	<string>AppIcon.icns</string>
+
+	<key>CFBundleShortVersionString</key>
+	<string>--VER_SHORT--</string>
+
+	<key>CFBundleGetInfoString</key>
+	<string>Copyright 2022 by Raphael Kim</string>
+
+	<key>NSHighResolutionCapable</key>
+	<true/>
+
+    </dict>
+</plist>

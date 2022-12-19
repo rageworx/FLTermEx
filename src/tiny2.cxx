@@ -1,34 +1,35 @@
 //
-// "$Id: tiny2.cxx 29048 2021-08-31 22:05:10 $"
-//
 // FLTerm2 -- FLTK based terminal emulator
 //
 //    example application using the Fl_Term widget.
 //
 // Copyright 2017-2021 by Yongchao Fan.
+// Copyright 2022 Raphael Kim.
 //
 // This library is free software distributed under GNU GPL 3.0,
 // see the license at:
 //
-//     https://github.com/yongchaofan/FLTerm/blob/master/LICENSE
+//     https://github.com/rageworx/FLTermEx/blob/master/LICENSE
 //
 // Please report all bugs and problems on the following page:
 //
-//     https://github.com/yongchaofan/FLTerm/issues/new
+//     https://github.com/rageworx/FLTermEx/issues/new
 //
 
+#define APP_VERSION_STR     "2.2.0.5"
+
 const char ABOUT_TERM2[]="\r\n\n\
-\tFLTerm is a simple, small, scriptable terminal emulator,\r\n\n\
+\tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
 \ta serial/telnet/ssh/sftp/netconf client that features:\r\n\n\n\
-\t    * lightweight minimalist design\r\n\n\
-\t    * cross platform and open source\r\n\n\
+\t    * light-weight minimalist design w/ FLTK\r\n\n\
+\t    * cross platform open source\r\n\n\
 \t    * command history and autocompletion\r\n\n\
 \t    * drag&drop text to run commands in batch\r\n\n\
 \t    * drag&drop files to transfer to remote host\r\n\n\
 \t    * scripting interface at xmlhttp://127.0.0.1:%d\r\n\n\n\
-\tVersion 2.1 ©2018-2021 Yongchao Fan\r\n\n\
-\thttp://yongchaofan.github.io/FLTerm\r\n\n";
-const char FLTERM[]="\r\033[32mFLTerm > \033[37m";
+\tVersion %s ©2022 Raphael, Kim, 2018-2021 Yongchao Fan\r\n\n\
+\thttps://github.com/rageworx/FLTermEx\r\n\n";
+const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
 
 #include <thread>
 #include "host.h"
@@ -36,7 +37,7 @@ const char FLTERM[]="\r\033[32mFLTerm > \033[37m";
 #include "Fl_Term.h"
 #include "Fl_Browser_Input.h"
 
-#include <FL/platform.H>	// needed for fl_display
+#include <FL/platform.H>
 #include <FL/Fl.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Tabs.H>
@@ -61,6 +62,7 @@ const char FLTERM[]="\r\033[32mFLTerm > \033[37m";
 	#define DEFAULTFONT "Courier New"
   #endif
 #endif
+
 int httport;
 void httpd_init();
 void httpd_exit();
@@ -114,7 +116,7 @@ const char *file_chooser(const char *title, const char *filter, int type)
 void about_cb(Fl_Widget *w, void *data)
 {
 	char buf[4096];
-	sprintf(buf, ABOUT_TERM2, httport);
+	snprintf(buf, 4096, ABOUT_TERM2, httport, APP_VERSION_STR );
 	pTerm->disp(buf);
 }
 const char *kb_gets(const char *prompt, int echo)
@@ -326,7 +328,7 @@ void protocol_cb(Fl_Widget *w)
 #ifdef WIN32
 		char port[32]="\\\\.\\";
 		for ( int i=1; i<32; i++ ) {	//auto detect serial ports
-			sprintf(port+4, "COM%d", i);
+			snprintf(port+4, 32, "COM%d", i);
 			HANDLE hPort = CreateFileA(port, GENERIC_READ, 0, NULL,
 											OPEN_EXISTING, 0, NULL);
 			if ( hPort!=INVALID_HANDLE_VALUE ) {
@@ -440,7 +442,7 @@ void font_cb(Fl_Widget *, long)
 		int j = 1;
 		for (int i=6; i<=32 || i<s[n-1]; i++) {
 			char buf[20];
-			sprintf(buf,"%d",i);
+			snprintf(buf,20,"%d",i);
 			sizeobj->add(buf);
 			if ( i==fontsize ) sizeobj->value(sizeobj->size());
 		}
@@ -449,7 +451,7 @@ void font_cb(Fl_Widget *, long)
 		int w = 0;
 		for (int i = 0; i < n; i++) {
 			char buf[20];
-			sprintf(buf,"@b%d",s[i]);
+			snprintf(buf,20,"@b%d",s[i]);
 			sizeobj->add(buf);
 			if ( s[i]==fontsize ) sizeobj->value(sizeobj->size());
 		}
@@ -556,14 +558,14 @@ void script_open( const char *fn )
 	if ( ext!=NULL ) {
 		if ( strcmp(ext, ".html")==0 ) {
 			char url[1024], msg[1024];
-			sprintf(url, "http://127.0.0.1:%d/%s", httport, fn);
+			snprintf(url, 1024, "http://127.0.0.1:%d/%s", httport, fn);
  			if ( !fl_open_uri(url, msg, 1024) ) fl_alert("Error:%s",msg);
 			return;
 		}
 	}
 #ifdef WIN32
 	char http_port[16];
-	sprintf(http_port, "%d", httport);
+	snprintf(http_port, 16, "%d", httport);
 	ShellExecuteA(NULL, "open", fn, http_port, NULL, SW_SHOW);
 #else
 	char cmd[4096]="open ";
@@ -900,7 +902,9 @@ int main(int argc, char **argv)
 		pMenuBar->window_menu_style(Fl_Sys_Menu_Bar::no_window_menu);
 		pMenuBar->menu(menubar);
 		pMenuBar->textsize(18);
+#ifndef __APPLE__
 		pMenuBar->about(about_cb, NULL);
+#endif /// of __APPLE__
 		pTerm = new Fl_Term(0, MENUHEIGHT, pWindow->w(),
 								pWindow->h()-MENUHEIGHT, "term");
 		pTerm->labelsize(16);
@@ -977,18 +981,34 @@ void httpFile(int s1, char *file)
 	int len;
 	struct stat sb;
 	if ( stat( file, &sb ) ==-1 ) {
-		len=sprintf(reply, "HTTP/1.1 404 not found\nDate: %s\n", timebuf);
-		len+=sprintf(reply+len, "Server: FLTerm\nConnection: close");
-	    len+=sprintf(reply+len, "Content-Type: text/html\nContent-Length: 14");
-	    len+=sprintf(reply+len, "\n\nfile not found");
+        int snplen = 4096;
+		len=snprintf(reply, snplen, "HTTP/1.1 404 not found\nDate: %s\n", timebuf);
+        snplen -= len;
+        if ( snplen > 0 ) {
+		    len+=snprintf(reply+len, snplen,"Server: FLTerm\nConnection: close");
+            snplen -= len;
+        }
+        if ( snplen > 0 ) {
+	        len+=snprintf(reply+len, snplen,"Content-Type: text/html\nContent-Length: 14");
+            snplen -= len;
+        }
+        if ( snplen > 0 ) {
+	        len+=snprintf(reply+len, snplen,"\n\nfile not found");
+            snplen -= len;
+        }
 		send(s1, reply, len, 0);
 		return;
 	}
 
 	FILE *fp = fopen( file, "rb" );
 	if ( fp!=NULL ) {
-		len=sprintf(reply, "HTTP/1.1 200 Ok\nDate: %s\n", timebuf);
-		len+=sprintf(reply+len, "Server: FLTerm\nConnection: close");
+        int snplen = 4096;
+		len=snprintf(reply, snplen, "HTTP/1.1 200 Ok\nDate: %s\n", timebuf);
+        snplen -= len;
+        if ( snplen > 0 ) {
+		    len+=snprintf(reply+len, snplen, "Server: FLTerm\nConnection: close");
+            snplen -= len;
+        }
 
 		const char *filext=strrchr(file, '.');
 		int i=0;
@@ -996,16 +1016,28 @@ void httpFile(int s1, char *file)
 			for ( int j=0; j<8; j++ )
 				if ( strcmp(filext, exts[j])==0 ) i=j;
 		}
-		len+=sprintf(reply+len,"Content-Type: %s\n", mime[i]);
+        if ( snplen > 0 ) {
+		    len+=snprintf(reply+len, snplen, "Content-Type: %s\n", mime[i]);
+            snplen -= len;
+        }
 
 		long filesize = sb.st_size;
-		len+=sprintf(reply+len, "Content-Length: %ld\n", filesize);
-		strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &sb.st_mtime));
-		len+=sprintf(reply+len, "Last-Modified: %s\n\n", timebuf);
+        if ( snplen > 0 ) {
+    		len+=snprintf(reply+len, snplen, "Content-Length: %ld\n", filesize);
+            snplen -= len;
+        }
+    	
+        strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime( &sb.st_mtime));
+        if ( snplen >0 ) {
+            len+=snprintf(reply+len, snplen, "Last-Modified: %s\n\n", timebuf);
+            snplen -= len;
+        }
 
 		send(s1, reply, len, 0);
+
 		while ( (len=fread(reply, 1, 4096, fp))>0 )
 			if ( send(s1, reply, len, 0)==-1 ) break;
+
 		fclose(fp);
 	}
 }
@@ -1014,6 +1046,7 @@ void httpd( int s0 )
 	struct sockaddr_in cltaddr;
 	socklen_t addrsize=sizeof(cltaddr);
 	char buf[4096], *cmd;
+    char* bufp = buf;
 	const char *reply;
 	int cmdlen, replen, http_s1;
 
@@ -1033,7 +1066,8 @@ void httpd( int s0 )
 			}
 			else {				//CGI request
 				replen = term_command(++cmd, &reply);
-				int len = sprintf(buf, HEADER, replen);
+                int snplen = 4096 - ( buf - bufp );
+				int len = snprintf(buf, snplen, HEADER, replen);
 				if ( send(http_s1, buf, len, 0)<0 ) break;
 				len = 0;
 				while ( replen>0 ) {
