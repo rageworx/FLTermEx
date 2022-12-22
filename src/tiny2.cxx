@@ -16,7 +16,7 @@
 //     https://github.com/rageworx/FLTermEx/issues/new
 //
 
-#define APP_VERSION_STR     "2.2.0.5"
+#define APP_VERSION_STR     "2.2.0.6"
 
 const char ABOUT_TERM2[]="\r\n\n\
 \tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
@@ -306,8 +306,10 @@ const char *ports[]={
 #endif
 					"23", "22", "22", "830"
 					};
+const size_t baudslen = 7;
 const char *bauds[]={"9600,n,8,1", "19200,n,8,1", "38400,n,8,1",
-					 "57600,n,8,1", "115200,n,8,1", "230400,n,8,1"
+					 "57600,n,8,1", "115200,n,8,1", "150000,n,8,1",
+                     "230400,n,8,1"
 					};
 void protocol_cb(Fl_Widget *w)
 {
@@ -322,12 +324,12 @@ void protocol_cb(Fl_Widget *w)
 	if ( proto==1 ) {
 		pHostname->menubutton()->clear();
 		pHostname->label("Settings:");
-		for ( int i=0; i<6; i++ )
+		for ( size_t i=0; i<baudslen; i++ )
 			pHostname->add(bauds[i]);
 		pHostname->value(bauds[4]);
 #ifdef WIN32
 		char port[32]="\\\\.\\";
-		for ( int i=1; i<32; i++ ) {	//auto detect serial ports
+		for ( size_t i=1; i<32; i++ ) {	//auto detect serial ports
 			snprintf(port+4, 32, "COM%d", i);
 			HANDLE hPort = CreateFileA(port, GENERIC_READ, 0, NULL,
 											OPEN_EXISTING, 0, NULL);
@@ -870,7 +872,7 @@ void redraw_cb(void *)
 	}
 	Fl::repeat_timeout(0.02, redraw_cb);
 }
-static char title[256]="FLTerm      ";
+static char title[256]="FLTermEx     ";
 void title_cb(void *)
 {
 	if ( title_changed ) {
@@ -893,7 +895,13 @@ int main(int argc, char **argv)
 {
 	httpd_init();
 	libssh2_init(0);
+#ifdef FLTK_EXT_VERSION
+    Fl::scheme("flat");
+#else
 	Fl::scheme("gtk+");
+#endif
+
+    Fl_Double_Window::default_xclass( "FlTermEx" );
 	Fl::lock();
 
 	pWindow = new Fl_Double_Window(800, 640, "FLTerm");
@@ -944,6 +952,7 @@ int main(int argc, char **argv)
 	Fl::add_timeout(0.02, redraw_cb);
 	Fl::add_timeout(1.0, title_cb);
 	if ( !local_edit ) connect_dlg(NULL, NULL);
+    about_cb( NULL, NULL );
 	Fl::run();
 
 	fl_chdir(cwd);			//in case cwd was changed in sftp_lcd
