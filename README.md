@@ -10,7 +10,7 @@ This project is implemenation of  [FLTerm](http://yongchaofan.github.io/FLTerm) 
 
 - Supports better build enviroments
 - Fixed more warning of C++ standards.
-- Standalone macOS application with install package.
+- Standalone macOS application with install package (preparing)
 
 ## Project philosophy
 
@@ -19,6 +19,9 @@ FLTerm(Fast Light Terminal, formally "tinyTerm2") is a rewrite of tinyTerm in C+
 User interface design is minimal, program starts with no tabs, tabs are enabled automatically when second connection is made; scrollbar hidden until user trys to scroll back, only one dialog for makeing connections, 
     
 ### Minimal requiremented libraries 
+
+- libssl
+    - 1.1 for dependency on libssh2.
 
 - libssh2 
     - 1.9.0 for full support of WinCNG crypto functions
@@ -42,13 +45,24 @@ User interface design is minimal, program starts with no tabs, tabs are enabled 
 
 
 ## Building
-FLTerm able to compile with 
+FLTermEx able to compile with 
 - MingW-W64 x86 systems with MSYS2.
 - macOS with command line development tool, recommend brew with iTerm2
 - Linux with gnu tools.
+
+## Configure
+- This is only for macOS users,
+- Before build source code, need to run `.configure` to find these libraries to be linked.
+    - libssl.a
+	- libcrypto.a
+	- libssh2.a
+- confiure helps find static library to be linked.
 
 ### Makefiles 
 - Makefile.mingw 
     are provided for building with MSYS2 + MinGW-W64.
 - Makefile.macos  
     building with libssh2 backend on macOS using Xcode command line tools and gmake
+- Do symlink to one of your right platform Makefile.{platform} to Makefile
+    eg.)
+	    `ln -S Makefile.macos Makefile`

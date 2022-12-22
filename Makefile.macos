@@ -1,7 +1,12 @@
 #Makefile for macOS with libssh2
 HEADERS = src/host.h src/ssh2.h src/Fl_Term.h src/Fl_Browser_Input.h
 OBJS = obj/tiny2.o obj/ssh2.o obj/host.o obj/Fl_Term.o obj/Fl_Browser_Input.o obj/cocoa_wrapper.o
-LIBS = -lssh2
+
+## referenced libraries for macOS with brew -
+include .config
+LIBS += ${LIBSSL}
+LIBS += ${LIBCRYPTO}
+LIBS += ${LIBSSH2}
 
 CFLAGS= -std=c++11 ${shell fltk-config --cxxflags}
 LDFLAGS = ${shell fltk-config --ldstaticflags} -lstdc++ -lz 
@@ -28,7 +33,7 @@ package: ${TARGET}
 	@cp -rf res/FLTermEx_app ${PACKAGE}
 	@mkdir -p ${PACKAGE}/Contents/MacOS
 	@cp ${TARGET} ${PACKAGE}/Contents/MacOS/FLTermEx
-	@./automacverapply.sh
+	@./scripts/automacverapply.sh
 
 clean:
 	@rm -rf obj/*.o ${TARGET}
