@@ -1,6 +1,7 @@
 #!/bin/bash
 # A shell scipt for configure for macOS only.
 
+AARCH64=0
 CFGFN=.config
 SCHBASE="/usr/local/Cellar"
 
@@ -21,7 +22,7 @@ fi
 
 # Check .config exists ?
 if [ -e ${CFGFN} ];then
-	echo "removing ${CFGGN} ..."
+	echo "removing ${CFGFN} ..."
 	rm -f ${CFGFN}
 fi
 
@@ -66,7 +67,7 @@ else
 SRLIST=(${SR})
 if [ -e ${SRLIST[0]} ];then
 	echo "${SRLIST[0]}"
-	SR=`ls -dC1 ${SRLIST[0]}/openssl@*/`
+	SR=`ls -dC1 ${SRLIST[0]}/*/`
 	SRLIST=(${SR})
 	if [ -e ${SRLIST[0]} ];then
 		echo -n "Checking libssl.a ... "
