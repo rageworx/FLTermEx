@@ -64,5 +64,5 @@ FLTermEx able to compile with
 - Makefile.macos  
     building with libssh2 backend on macOS using Xcode command line tools and gmake
 - Do symlink to one of your right platform Makefile.{platform} to Makefile
-    eg.)
-	    `ln -S Makefile.macos Makefile`
+     * eg.)
+         `ln -s Makefile.macos Makefile`
