@@ -8,7 +8,8 @@ LIBS += ${LIBSSL}
 LIBS += ${LIBCRYPTO}
 LIBS += ${LIBSSH2}
 
-CFLAGS= -std=c++11 ${shell fltk-config --cxxflags}
+CFLAGS += -std=c++11 ${shell fltk-config --cxxflags}
+CFLAGS += -I${INCSSH2}
 LDFLAGS = ${shell fltk-config --ldstaticflags} -lstdc++ -lz 
 
 TARGET=bin/tinyTerm2

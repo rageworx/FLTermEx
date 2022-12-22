@@ -2,28 +2,71 @@
 # A shell scipt for configure for macOS only.
 
 CFGFN=.config
+SCHBASE="/usr/local/Cellar"
 
 # Automatic detecting architecture.
 KRNL=`uname -s`
 KVER=`uname -r | cut -d . -f1`
 ARCH=`uname -m`
 
-if [ "${KRNL}" != "Darwin " ];then
+if [ "${KRNL}" != "Darwin" ];then
 	echo "This configure works for only macOS."
+	exit 0
+fi
+
+if [ "${ARCH}" == "arm64" ];then
+	SCHBASE="/opt/homebrew/opt"
+	AARCH64=1
 fi
 
 # Check .config exists ?
 if [ -e ${CFGFN} ];then
-	rm -f ${CFGGN}
+	echo "removing ${CFGGN} ..."
+	rm -f ${CFGFN}
 fi
 
 # Searching for libssl.
 echo -n "Checking libssl ... "
-SR=`ls -ldC1 /usr/local/Cellar/openssl*`
+SR=`ls -dC1 ${SCHBASE}/openssl@*`
+if [ "${SR}" == "" ];then
+	echo "failure."
+	echo "openssl seems not found. install with 'brew install openssl'".
+	exit 0
+else
+	echo "Ok, list is ... "
+	echo "${SR}"
+fi
+
+# aarch64 macOS may different place --
+if [ ${AARCH64} -gt 0 ];then
+	SRLIST=(${SR})
+	echo -n "Checking libssl.a ... "
+	TESTPATH="${SRLIST[0]}/lib/libssl.a"
+	if [ -e ${TESTPATH} ];then
+		echo "libssl found."
+		echo " ... at ${TESTPATH}"
+		echo "LIBSSL=\"${TESTPATH}\"" >> .config
+	else
+		echo "failure."
+		echo "libssl not found at ${TESTPATH}"
+		exit 0
+	fi
+	echo -n "Checking libcrypto.a ... "
+	TESTPATH="${SRLIST[0]}/lib/libcrypto.a"
+	if [ -e ${TESTPATH} ];then
+		echo "libcrypto found."
+		echo " ... at ${TESTPATH}"
+		echo "LIBCRYPTO=\"${TESTPATH}\"" >> .config
+	else
+		echo "failure."
+		echo "libcrypto not found at ${TESTPATH}"
+		exit 0
+	fi
+else
 SRLIST=(${SR})
 if [ -e ${SRLIST[0]} ];then
 	echo "${SRLIST[0]}"
-	SR=`ls -ldC1 ${SRLIST[0]}/*`
+	SR=`ls -dC1 ${SRLIST[0]}/openssl@*/`
 	SRLIST=(${SR})
 	if [ -e ${SRLIST[0]} ];then
 		echo -n "Checking libssl.a ... "
@@ -58,14 +101,25 @@ else
 	echo "libssl not existed, install with 'brew install libssl'."
 	exit 0
 fi
+fi
+
+SSH2PATH=""
 
 echo -n "Checking libssh2 ... "
-SR=`ls -ldC1 /usr/local/lib/libssh*.a`
+if [ ${AARCH64} -gt 0 ];then
+	SSH2PATH="/opt/homebrew/opt/libssh2"
+	SR=`ls -C1 ${SSH2PATH}/lib/lib*.a`
+else
+	SSH2PATH="/usr/local"
+	SR=`ls -C1 ${SSH2PATH}/lib/libssh*.a`
+fi
+
 SRLIST=(${SR})
 if [ -e ${SRLIST[0]} ];then
 	echo "libssh2 found."
 	echo " ... at ${SRLIST[0]}"
 	echo "LIBSSH2=\"${SRLIST[0]}\"" >> .config
+	echo "INCSSH2=\"${SSH2PATH}/include\"" >> .config
 else
 	echo "failure."
 	echo "libssh2 not existed, install with 'brew install openssh'."
