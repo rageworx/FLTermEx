@@ -1,0 +1,36 @@
+#Makefile for MinGW-W64 on MSYS2 with libssh2
+
+HEADERS = src/host.h src/ssh2.h src/Fl_Term.h src/Fl_Browser_Input.h
+OBJS = obj/tiny2.o obj/ssh2.o obj/host.o obj/Fl_Term.o obj/Fl_Browser_Input.o
+RCOBJ = obj/FlTerm.o
+
+CFLAGS += -std=c++11 
+CFLAGS += ${shell fltk-config --cxxflags}
+CFLAGS += -Ires
+LDFLAGS += -static
+LDFLAGS += ${shell fltk-config --ldstaticflags} 
+LDFLAGS += -lstdc++
+LDFLAGS += -lssh2 -lssl -lcrypto -lz
+LDFLAGS += -lshlwapi -lws2_32
+LOPTS += -s -O2
+
+TARGET=bin/FLTermEx
+
+all: prepare ${TARGET}
+
+prepare:
+	@mkdir -p bin
+	@mkdir -p obj
+
+${RCOBJ}: res/FlTerm.rc
+	@windres -i $< -Ires -o $@
+
+${TARGET}: ${OBJS} ${RCOBJ}
+	@cc -o "$@" $^ ${LDFLAGS} ${LOPTS}
+
+obj/%.o: src/%.cxx ${HEADERS}
+	@${CC} ${CFLAGS} -c $< -o $@
+
+clean:
+	@rm -rf obj/*.o ${TARGET}
+	@rm -rf ${PACKAGE}
