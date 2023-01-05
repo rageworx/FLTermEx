@@ -58,6 +58,9 @@ FLTermEx able to compile with
 	- libssh2.a
 - little script of configure helps find static library to be linked related in ssh2.
 
+## MinGW-W64 with MSYS2 users,
+- install libssh2-devel package with `pacman -S mingw-w64-x86_64-libssh2` or `pacman -S mingw-w64-x86_32-libssh2`.
+
 ### Makefiles 
 - Makefile.mingw 
     are provided for building with MSYS2 + MinGW-W64.

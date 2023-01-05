@@ -16,7 +16,7 @@
 //     https://github.com/rageworx/FLTermEx/issues/new
 //
 
-#define APP_VERSION_STR     "2.2.0.6"
+#include "resource.h"
 
 const char ABOUT_TERM2[]="\r\n\n\
 \tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
@@ -31,6 +31,9 @@ const char ABOUT_TERM2[]="\r\n\n\
 \thttps://github.com/rageworx/FLTermEx\r\n\n";
 const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
 
+#include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
 #include <thread>
 #include "host.h"
 #include "ssh2.h"
@@ -431,7 +434,7 @@ void font_cb(Fl_Widget *, long)
 {
 	int sel = fontobj->value();
 	if (!sel) return;
-	fontnum = (long)fontobj->data(sel);
+	fontnum = *(Fl_Font*)fontobj->data(sel);
 	pTerm->textfont(fontnum);
 	pCmd->textfont(fontnum);
 	resize_window(pTerm->sizeX(), pTerm->sizeY());

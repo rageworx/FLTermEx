@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#ifdef WIN32
+#ifdef _WIN32
 	#include <sys/stat.h>
 	#include <io.h>
 	#include <time.h>

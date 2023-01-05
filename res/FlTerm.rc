@@ -1,27 +1,35 @@
-#pragma code_page(65001)
+#include <windows.h>
+#include "resource.h"
 
+101         ICON           ".\\Fl.ico"
+
+LANGUAGE LANG_NEUTRAL, LANG_NEUTRAL
 1 VERSIONINFO
-FILEVERSION 1,2,9,0
-PRODUCTVERSION 1,2,9,0
-FILEOS 0x4
-FILETYPE 0x1
+    FILEVERSION     APP_VERSION
+    PRODUCTVERSION  APP_VERSION
+    FILEOS          VOS_NT_WINDOWS32
+    FILETYPE        VFT_DLL
+    FILESUBTYPE     VFT2_UNKNOWN
+    FILEFLAGSMASK   0x0000003F
+    FILEFLAGS       0x00000000
 {
-BLOCK "StringFileInfo"
-{
-	BLOCK "040904B0"
-	{
-		VALUE "FileDescription", "tiny Terminal emulator 2"
-		VALUE "LegalCopyright", "©2018-2020 Yongchao Fan"
-		VALUE "ProductName", "tinyTerm2"
-		VALUE "ProductVersion", "1.2.9.0"
-	}
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "00000000"
+        {
+            VALUE "FileDescription", 	"FLTK Terminal Emulator"
+            VALUE "InternalName", 		"fltermex"
+            VALUE "LegalCopyright", 	"(C)2022,2023 Raphael Kim"
+            VALUE "OriginalFilename", 	"fltermex"
+            VALUE "ProductName", 		"FLTermEx"
+            VALUE "ProductVersion",     APP_VERSION_STR
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x0000, 0x0000
+    }
 }
 
-BLOCK "VarFileInfo"
-{
-	VALUE "Translation", 0x0409, 0x04B0
-}
-}
-
-128 ICON "FL.ico"
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "fltk.manifest"
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+1                  RT_MANIFEST    ".\\manifest.xml"

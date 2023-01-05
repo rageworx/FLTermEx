@@ -18,7 +18,7 @@
 //     https://github.com/yongchaofan/tinyTerm2/issues/new
 //
 
-#ifdef WIN32
+#ifdef _WIN32
 	#include <direct.h>
 	#include <winsock2.h>
 	#include <ws2tcpip.h>

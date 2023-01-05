@@ -2,7 +2,7 @@
 # Automatic version updater for Mac OS  from src/tiny2.cxx
 # Script by rageworx@gmail.com
 
-VER_GREP=`grep APP_VERSION_STR src/tiny2.cxx`
+VER_GREP=`grep APP_VERSION_STR res/resouce.h`
 VER_ARR=($VER_GREP)
 VER_STR=`echo ${VER_ARR[2]} | sed "s/\"//g"`
 
