@@ -37,11 +37,11 @@ User interface design is minimal, program starts with no tabs, tabs are enabled 
             
 ### source files included:
 
-    ssh2.h and ssh2.cxx implements ssh/netconf and sftp hosts
-    host.h and host.cxx implements telnet, serial and shell host
-    Fl_Term.h and Fl_Term.cxx implements a vt100 terminal widget using FLTK
-    Fl_Browser_Input.h and Fl_Browser_Input.cxx extends Fl_Input with autocompletion
-    tiny2.cxx combines Fl_Term, host and ssh2 to create the simple terminal application  
+- ssh2.h and ssh2.cxx implements ssh/netconf and sftp hosts
+- host.h and host.cxx implements telnet, serial and shell host
+- Fl_Term.h and Fl_Term.cxx implements a vt100 terminal widget using FLTK
+- Fl_Browser_Input.h and Fl_Browser_Input.cxx extends Fl_Input with autocompletion
+- tiny2.cxx combines Fl_Term, host and ssh2 to create the simple terminal application  
 
 
 ## Building
@@ -52,11 +52,11 @@ FLTermEx able to compile with
 
 ## Configure
 - This is only for macOS users,
-- Before build source code, need to run `.configure` to find these libraries to be linked.
+- Before build source code, need to run `./configure` to find these libraries to be linked.
     - libssl.a
 	- libcrypto.a
 	- libssh2.a
-- confiure helps find static library to be linked.
+- little script of configure helps find static library to be linked related in ssh2.
 
 ### Makefiles 
 - Makefile.mingw 
