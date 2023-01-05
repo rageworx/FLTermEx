@@ -16,25 +16,11 @@
 //     https://github.com/rageworx/FLTermEx/issues/new
 //
 
-#include "resource.h"
-
-const char ABOUT_TERM2[]="\r\n\n\
-\tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
-\ta serial/telnet/ssh/sftp/netconf client that features:\r\n\n\n\
-\t    * light-weight minimalist design w/ FLTK\r\n\n\
-\t    * cross platform open source\r\n\n\
-\t    * command history and autocompletion\r\n\n\
-\t    * drag&drop text to run commands in batch\r\n\n\
-\t    * drag&drop files to transfer to remote host\r\n\n\
-\t    * scripting interface at xmlhttp://127.0.0.1:%d\r\n\n\n\
-\tVersion %s ©2022 Raphael, Kim, 2018-2021 Yongchao Fan\r\n\n\
-\thttps://github.com/rageworx/FLTermEx\r\n\n";
-const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
-
 #include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+
 #include "host.h"
 #include "ssh2.h"
 #include "Fl_Term.h"
@@ -53,18 +39,34 @@ const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Native_File_Chooser.H>
 
-#define TABHEIGHT	24
+#include "resource.h"
+
+#define TABHEIGHT	16
 #ifdef __APPLE__
   #define MENUHEIGHT 0
   #define DEFAULTFONT "Menlo Regular"
 #else
-  #define MENUHEIGHT 24
-  #ifdef WIN32
+  #define MENUHEIGHT TABHEIGHT
+  #ifdef _WIN32
     #define DEFAULTFONT "Consolas"
   #else
 	#define DEFAULTFONT "Courier New"
   #endif
 #endif
+
+const char ABOUT_TERM2[]="\r\n\n\
+\tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
+\ta serial/telnet/ssh/sftp/netconf client that features:\r\n\n\n\
+\t    * light-weight minimalist design w/ FLTK\r\n\n\
+\t    * cross platform open source\r\n\n\
+\t    * command history and autocompletion\r\n\n\
+\t    * drag&drop text to run commands in batch\r\n\n\
+\t    * drag&drop files to transfer to remote host\r\n\n\
+\t    * scripting interface at xmlhttp://127.0.0.1:%d\r\n\n\n\
+\tVersion %s ©2022-2023 Raphael, Kim, 2018-2021 Yongchao Fan\r\n\n\
+\thttps://github.com/rageworx/FLTermEx\r\n\n";
+const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
+
 
 int httport;
 void httpd_init();
@@ -76,8 +78,9 @@ Fl_Term *pTerm;
 Fl_Browser_Input *pCmd;
 Fl_Sys_Menu_Bar *pMenuBar;
 Fl_Font fontnum = FL_COURIER;
+
 char fontname[256] = DEFAULTFONT;
-int fontsize = 16;
+int fontsize = 12;
 int termcols = 80;
 int termrows = 25;
 bool sendtoall = false;
@@ -86,7 +89,7 @@ double opacity = 1.0;
 
 #if defined (__APPLE__)
 void setTransparency(Fl_Window *pWin, double alpha);//cocoa_wrapper.mm
-#elif defined (WIN32)
+#elif defined (_WIN32)
 void setTransparency(Fl_Window *pWin, double alpha)
 {
 	HWND hwnd = fl_xid(pWin);
@@ -105,9 +108,15 @@ void setTransparency(Fl_Window *pWin, double alpha)
 					PropModeReplace, (unsigned char *)&opacity, 1);
 }
 #endif
-#define OPEN_FILE 	Fl_Native_File_Chooser::BROWSE_FILE
-#define SAVE_FILE	Fl_Native_File_Chooser::BROWSE_SAVE_FILE
+
+#define OPEN_FILE 	    Fl_Native_File_Chooser::BROWSE_FILE
+#define SAVE_FILE	    Fl_Native_File_Chooser::BROWSE_SAVE_FILE
+
+#define DEFAULT_COLOR           0x30303000
+#define DEFAULT_LABELCOLOR      0xC0C0C000
+
 static Fl_Native_File_Chooser fnfc;
+
 const char *file_chooser(const char *title, const char *filter, int type)
 {
 	fnfc.title(title);
@@ -116,17 +125,20 @@ const char *file_chooser(const char *title, const char *filter, int type)
 	if ( fnfc.show()!=0 ) return NULL;
 	return fnfc.filename();
 }
+
 void about_cb(Fl_Widget *w, void *data)
 {
-	char buf[4096];
+	char buf[4096] = {0};
 	snprintf(buf, 4096, ABOUT_TERM2, httport, APP_VERSION_STR );
 	pTerm->disp(buf);
 }
+
 const char *kb_gets(const char *prompt, int echo)
 {
 	if ( !pTerm->live() ) return NULL;
 	return pTerm->gets(prompt, echo);
 }
+
 void resize_window(int cols, int rows)
 {
 	fl_font(fontnum, fontsize);
@@ -137,7 +149,9 @@ void resize_window(int cols, int rows)
 	if ( pTabs!=NULL ) h+=TABHEIGHT;
 	pWindow->resize(pWindow->x(), pWindow->y(), w, h+MENUHEIGHT);
 }
+
 static bool title_changed = false;
+
 void term_cb(Fl_Widget *w, void *data )	//called when term connection changes
 {
 	Fl_Term *term=(Fl_Term *)w;
@@ -175,6 +189,7 @@ void tab_act(Fl_Term *pt)
 	
 	title_changed = true;
 }
+
 void tab_cb(Fl_Widget *w)
 {
 	if ( pTabs->value()==pTerm ) {		//clicking on active tab
@@ -192,6 +207,7 @@ void tab_cb(Fl_Widget *w)
 	tab_act((Fl_Term *)pTabs->value());	//activate new tab
 	pTabs->redraw(); 
 }
+
 void tab_new()
 {
 	if ( pTabs==NULL ) {
@@ -210,13 +226,14 @@ void tab_new()
 	}
 
 	Fl_Term *pt = new Fl_Term(0, 0, 800, 480, "term");
-	pt->labelsize(16);
+	pt->labelsize(fontsize);
 	pt->textsize(fontsize);
 	pt->callback(term_cb);
 	pTabs->add(pt);
 	tab_act(pt);
 	pt->resize(0, MENUHEIGHT+TABHEIGHT, pTabs->w(), pTabs->h()-TABHEIGHT);
 }
+
 HOST *host_new(const char *hostname)
 {
 	HOST *host=NULL;
@@ -242,6 +259,7 @@ HOST *host_new(const char *hostname)
 		host = new pipeHost(hostname);
 	return host;
 }
+
 void term_connect(const char *hostname)
 {
 	if ( pTerm->live() ) tab_new();
@@ -254,6 +272,7 @@ void term_connect(const char *hostname)
 		pTerm->copy_label(label);
 	}
 }
+
 bool tab_match(int i, char *label)
 {
 	Fl_Term *t = (Fl_Term *)pTabs->child(i);
@@ -263,6 +282,7 @@ bool tab_match(int i, char *label)
 	}
 	return false;
 }
+
 int term_command(char *cmd, const char **preply)
 {
 	int rc = 0;
@@ -300,7 +320,7 @@ Fl_Button *pConnect;
 Fl_Button *pCancel;
 
 const char *ports[]={
-#if defined(WIN32)
+#if defined(_WIN32)
 					"ipconfig", "COM1",
 #elif defined(__APPLE__)
 					"/bin/zsh", "tty.usbserial",
@@ -309,11 +329,14 @@ const char *ports[]={
 #endif
 					"23", "22", "22", "830"
 					};
+                    
 const size_t baudslen = 7;
+
 const char *bauds[]={"9600,n,8,1", "19200,n,8,1", "38400,n,8,1",
 					 "57600,n,8,1", "115200,n,8,1", "150000,n,8,1",
                      "230400,n,8,1"
 					};
+                    
 void protocol_cb(Fl_Widget *w)
 {
 	static int proto = 3;
@@ -330,7 +353,7 @@ void protocol_cb(Fl_Widget *w)
 		for ( size_t i=0; i<baudslen; i++ )
 			pHostname->add(bauds[i]);
 		pHostname->value(bauds[4]);
-#ifdef WIN32
+#ifdef _WIN32
 		char port[32]="\\\\.\\";
 		for ( size_t i=1; i<32; i++ ) {	//auto detect serial ports
 			snprintf(port+4, 32, "COM%d", i);
@@ -349,10 +372,12 @@ void protocol_cb(Fl_Widget *w)
 		if ( proto==0 ) pHostname->value("");
 	}
 }
+
 void menu_host_cb(Fl_Widget *w, void *data)
 {
 	term_connect(pMenuBar->text());
 }
+
 void connect_cb(Fl_Widget *w)
 {
 	char buf[256]="!";
@@ -383,25 +408,43 @@ void connect_cb(Fl_Widget *w)
 							buf+1, 0, menu_host_cb);
 	term_connect(buf+1);
 }
+
 void cancel_cb(Fl_Widget *w)
 {
 	w->parent()->hide();
 }
+
 void connect_dlg_build()
 {
 	pConnectDlg = new Fl_Window(360, 200, "Connect");
 	{
+        pConnectDlg->color(DEFAULT_COLOR);
+        pConnectDlg->labelcolor(DEFAULT_LABELCOLOR);
 		pProtocol = new Fl_Choice(100,20,192,24, "Protocol:");
+        pProtocol->color( fl_darker( pConnectDlg->color() ) );
+        pProtocol->labelcolor( pConnectDlg->labelcolor() );
+        pProtocol->textcolor( pConnectDlg->labelcolor() );
 		pPort = new Fl_Input_Choice(100,60,192,24, "Port:");
+        pPort->color( fl_darker( pConnectDlg->color() ) );
+        pPort->labelcolor( pConnectDlg->labelcolor() );
 		pHostname = new Fl_Input_Choice(100,100,192,24,"Host:");
+        pHostname->color( fl_darker( pConnectDlg->color() ) );
+        pHostname->labelcolor( pConnectDlg->labelcolor() );
 		pConnect = new Fl_Button(200,160,80,24, "Connect");
+        pConnect->color( fl_darker( pConnectDlg->color() ) );
+        pConnect->labelcolor( pConnectDlg->labelcolor() );
 		pCancel = new Fl_Button(80,160,80,24, "Cancel");
-		pProtocol->textsize(16); pProtocol->labelsize(16);
-		pHostname->textsize(16); pHostname->labelsize(16);
-		pPort->textsize(16); pPort->labelsize(16);
-		pConnect->labelsize(16);
+        pCancel->color( fl_darker( pConnectDlg->color() ) );
+        pCancel->labelcolor( pConnectDlg->labelcolor() );
+		pProtocol->textsize(fontsize); 
+        pProtocol->labelsize(fontsize);
+		pHostname->textsize(fontsize); 
+        pHostname->labelsize(fontsize);
+		pPort->textsize(fontsize); 
+        pPort->labelsize(fontsize);
+		pConnect->labelsize(fontsize);
 		pConnect->shortcut(FL_Enter);
-		pCancel->labelsize(16);
+		pCancel->labelsize(fontsize);
 		pProtocol->add("shell|serial|telnet|ssh|sftp|netconf");
 		pProtocol->value(3);
 		pPort->value("22");
@@ -414,6 +457,7 @@ void connect_dlg_build()
 	pConnectDlg->end();
 	pConnectDlg->set_modal();
 }
+
 void connect_dlg(Fl_Widget *w, void *data)
 {
 	pConnectDlg->resize(pWindow->x()+100, pWindow->y()+150, 360, 200);
@@ -434,7 +478,10 @@ void font_cb(Fl_Widget *, long)
 {
 	int sel = fontobj->value();
 	if (!sel) return;
-	fontnum = *(Fl_Font*)fontobj->data(sel);
+    /* casting error fix -- */
+    void* pcf = fontobj->data(sel);
+    fontnum = *(Fl_Font*)&pcf; 
+    /* -------------------- */
 	pTerm->textfont(fontnum);
 	pCmd->textfont(fontnum);
 	resize_window(pTerm->sizeX(), pTerm->sizeY());
@@ -446,7 +493,7 @@ void font_cb(Fl_Widget *, long)
 	else if (s[0] == 0) {// many sizes;
 		int j = 1;
 		for (int i=6; i<=32 || i<s[n-1]; i++) {
-			char buf[20];
+			char buf[20] = {0};
 			snprintf(buf,20,"%d",i);
 			sizeobj->add(buf);
 			if ( i==fontsize ) sizeobj->value(sizeobj->size());
@@ -455,13 +502,14 @@ void font_cb(Fl_Widget *, long)
 	else {// some sizes
 		int w = 0;
 		for (int i = 0; i < n; i++) {
-			char buf[20];
+			char buf[20] = {0};
 			snprintf(buf,20,"@b%d",s[i]);
 			sizeobj->add(buf);
 			if ( s[i]==fontsize ) sizeobj->value(sizeobj->size());
 		}
 	}
 }
+
 void size_cb(Fl_Widget *, long) 
 {
 	int i = sizeobj->value();
@@ -473,21 +521,30 @@ void size_cb(Fl_Widget *, long)
 	pCmd->textsize(fontsize);
 	resize_window(pTerm->sizeX(), pTerm->sizeY());
 }
+
 void font_dlg_build()
 {
 	pFontDlg = new Fl_Double_Window(400, 240, "Font Dialog");
 	{
+        pFontDlg->color(DEFAULT_COLOR);
+        pFontDlg->labelcolor(DEFAULT_LABELCOLOR);
 		fontobj = new Fl_Hold_Browser(10, 20, 290, 210, "Face:");
 		fontobj->align(FL_ALIGN_TOP|FL_ALIGN_LEFT);
 		fontobj->box(FL_FRAME_BOX);
-		fontobj->color(53,3);
+		fontobj->color( fl_darker( DEFAULT_COLOR ) );
+        fontobj->labelcolor(DEFAULT_LABELCOLOR);
+        fontobj->textcolor(DEFAULT_LABELCOLOR);
 		fontobj->callback(font_cb);
 		sizeobj = new Fl_Hold_Browser(310, 20, 80, 180, "Size:");
 		sizeobj->align(FL_ALIGN_TOP|FL_ALIGN_LEFT);
 		sizeobj->box(FL_FRAME_BOX);
-		sizeobj->color(53,3);
+		sizeobj->color( fl_darker( DEFAULT_COLOR ) );
+        sizeobj->labelcolor(DEFAULT_LABELCOLOR);
+        sizeobj->textcolor(DEFAULT_LABELCOLOR);
 		sizeobj->callback(size_cb);
 		donebtn = new Fl_Button(310, 206, 80, 24, "Done");
+		donebtn->color( fl_darker( DEFAULT_COLOR ) );
+        donebtn->labelcolor(DEFAULT_LABELCOLOR);
 		donebtn->callback(cancel_cb);
 	}
 	pFontDlg->end();
@@ -496,7 +553,7 @@ void font_dlg_build()
 	int k = Fl::set_fonts(NULL);
 	sizes = new int*[k];
 	numsizes = new int[k];
-	for (long i = 0; i < k; i++) {
+	for (size_t i = 0; i < k; i++) {
 		int t; 
 		const char *name = Fl::get_font_name((Fl_Font)i,&t);
 		if (t==0 ) {
@@ -515,6 +572,7 @@ void font_dlg_build()
 		}
 	}
 }
+
 void font_dlg(Fl_Widget *w, void *data)
 {
 	pFontDlg->resize(pWindow->x()+200, pWindow->y()+100, 400, 240);
@@ -528,11 +586,13 @@ void font_dlg(Fl_Widget *w, void *data)
 *******************************************************************************/
 Fl_Window *pScriptDlg;
 Fl_Button *quitBtn, *pauseBtn;
+
 void quit_cb(Fl_Widget *w) 
 {
 	pTerm->quit_script();
 	w->parent()->hide();
 }
+
 void pause_cb(Fl_Widget *w)
 {
 	if ( pTerm->script_running() )
@@ -540,22 +600,30 @@ void pause_cb(Fl_Widget *w)
 	else
 		w->parent()->hide();
 }
+
 void script_dlg_build()
 {
 	pScriptDlg = new Fl_Double_Window(220, 72, "Script Control");
 	{
+        pScriptDlg->color(DEFAULT_COLOR);
+        pScriptDlg->labelcolor(DEFAULT_LABELCOLOR);
 		pauseBtn = new Fl_Button(20, 20, 80, 32, "Pause");
+        pauseBtn->color( fl_darker( pScriptDlg->color() ) );
+        pauseBtn->labelcolor( pScriptDlg->labelcolor() );
 		pauseBtn->callback(pause_cb);
-		pauseBtn->labelsize(16);
+		pauseBtn->labelsize(fontsize);
 		quitBtn = new Fl_Button(120, 20, 80, 32, "Quit");
+        quitBtn->color( fl_darker( pScriptDlg->color() ) );
+        quitBtn->labelcolor( pScriptDlg->labelcolor() );
 		quitBtn->callback(quit_cb);
-		quitBtn->labelsize(16);
+		quitBtn->labelsize(fontsize);
 	}
 	pScriptDlg->end();
 	pScriptDlg->set_modal();
 	pScriptDlg->resize(pWindow->x()+pWindow->w()-220, 
 							pWindow->y()+40, 220, 72);
 }
+
 void script_open( const char *fn )
 {
 	pTerm->learn_prompt();
@@ -568,16 +636,17 @@ void script_open( const char *fn )
 			return;
 		}
 	}
-#ifdef WIN32
-	char http_port[16];
+#ifdef _WIN32
+	char http_port[16] = {0};
 	snprintf(http_port, 16, "%d", httport);
 	ShellExecuteA(NULL, "open", fn, http_port, NULL, SW_SHOW);
 #else
-	char cmd[4096]="open ";
+	char cmd[4096] = "open ";
 	strcat(cmd, fn);
 	system(cmd);
 #endif
 }
+
 void script_cb(Fl_Widget *w, void *data)
 {
 	const Fl_Menu_Item *menu = pMenuBar->menu();
@@ -776,7 +845,7 @@ Fl_Menu_Item menubar[] = {
 *  dictionary functions, load at start, save at end of program                 *
 *******************************************************************************/
 // load_dict set working directory and load scripts to menu
-#ifdef WIN32
+#ifdef _WIN32
 const char *HOMEDIR = "USERPROFILE";
 #else
 const char *HOMEDIR = "HOME";
@@ -898,8 +967,19 @@ int main(int argc, char **argv)
 {
 	httpd_init();
 	libssh2_init(0);
+    
 #ifdef FLTK_EXT_VERSION
     Fl::scheme("flat");
+    
+    fl_message_size_ = fontsize;
+    fl_message_window_color_ = DEFAULT_COLOR;
+    fl_message_label_color_ = DEFAULT_LABELCOLOR;
+    fl_message_button_color_[0] = fl_darker( DEFAULT_COLOR );
+    fl_message_button_color_[1] = fl_darker( DEFAULT_COLOR );
+    fl_message_button_color_[2] = fl_darker( DEFAULT_COLOR );
+    fl_message_button_label_color_[0] = DEFAULT_LABELCOLOR;
+    fl_message_button_label_color_[1] = DEFAULT_LABELCOLOR;
+    fl_message_button_label_color_[2] = DEFAULT_LABELCOLOR;    
 #else
 	Fl::scheme("gtk+");
 #endif
@@ -907,18 +987,25 @@ int main(int argc, char **argv)
     Fl_Double_Window::default_xclass( "FlTermEx" );
 	Fl::lock();
 
-	pWindow = new Fl_Double_Window(800, 640, "FLTerm");
+	pWindow = new Fl_Double_Window(800, 640, "FLTermEx");
 	{
+        pWindow->color(DEFAULT_COLOR);
 		pMenuBar=new Fl_Sys_Menu_Bar(0, 0, pWindow->w(), MENUHEIGHT);
+        pMenuBar->color(DEFAULT_COLOR);
+        pMenuBar->labelcolor(DEFAULT_LABELCOLOR);
 		pMenuBar->window_menu_style(Fl_Sys_Menu_Bar::no_window_menu);
 		pMenuBar->menu(menubar);
-		pMenuBar->textsize(18);
-#ifndef __APPLE__
+        if ( MENUHEIGHT > 8 )
+        { 
+            pMenuBar->textsize(MENUHEIGHT - 2);
+        }
+        pMenuBar->textcolor(DEFAULT_LABELCOLOR);
+#ifdef __APPLE__
 		pMenuBar->about(about_cb, NULL);
 #endif /// of __APPLE__
 		pTerm = new Fl_Term(0, MENUHEIGHT, pWindow->w(),
 								pWindow->h()-MENUHEIGHT, "term");
-		pTerm->labelsize(16);
+		pTerm->labelsize(fontsize);
 		pTerm->callback( term_cb );
 		pCmd = new Fl_Browser_Input( 0, pWindow->h()-1, 1, 1, "");
 		pCmd->box(FL_FLAT_BOX);
@@ -933,8 +1020,8 @@ int main(int argc, char **argv)
 	pWindow->resizable(pTerm);
 	pWindow->end();
 	pTabs = NULL;
-#ifdef WIN32
-	pWindow->icon((char*)LoadIcon(fl_display, MAKEINTRESOURCE(128)));
+#ifdef _WIN32
+	pWindow->icon((char*)LoadIcon(fl_display, MAKEINTRESOURCE(101)));
 #endif
 
 	connect_dlg_build();
@@ -949,7 +1036,7 @@ int main(int argc, char **argv)
 	setTransparency(pWindow, opacity);
 	script_dlg_build();
 
-	char cwd[4096];
+	char cwd[4096] = {0};
 	fl_getcwd(cwd, 4096);	//save cwd set by load_dict()
 
 	Fl::add_timeout(0.02, redraw_cb);
@@ -1098,7 +1185,7 @@ void httpd( int s0 )
 static int http_s0 = -1;
 void httpd_init()
 {
-#ifdef WIN32
+#ifdef _WIN32
     WSADATA wsadata;
     WSAStartup(MAKEWORD(2,0), &wsadata);
 #endif
