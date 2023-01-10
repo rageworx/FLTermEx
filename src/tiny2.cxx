@@ -67,7 +67,6 @@ const char ABOUT_TERM2[]="\r\n\n\
 \thttps://github.com/rageworx/FLTermEx\r\n\n";
 const char FLTERM[]="\r\033[32mFLTermEx > \033[37m";
 
-
 int httport;
 void httpd_init();
 void httpd_exit();
@@ -524,11 +523,12 @@ void size_cb(Fl_Widget *, long)
 
 void font_dlg_build()
 {
-	pFontDlg = new Fl_Double_Window(400, 240, "Font Dialog");
+	pFontDlg = new Fl_Double_Window(400, 240, "Select a font");
 	{
         pFontDlg->color(DEFAULT_COLOR);
         pFontDlg->labelcolor(DEFAULT_LABELCOLOR);
 		fontobj = new Fl_Hold_Browser(10, 20, 290, 210, "Face:");
+        fontobj->format_char(0);
 		fontobj->align(FL_ALIGN_TOP|FL_ALIGN_LEFT);
 		fontobj->box(FL_FRAME_BOX);
 		fontobj->color( fl_darker( DEFAULT_COLOR ) );
@@ -550,26 +550,43 @@ void font_dlg_build()
 	pFontDlg->end();
 	pFontDlg->set_modal();
 
-	int k = Fl::set_fonts(NULL);
+    int fi = 0;
+	size_t k = Fl::set_fonts( fi ? ( fi>0 ? "*" : 0) : "-*" );
 	sizes = new int*[k];
 	numsizes = new int[k];
-	for (size_t i = 0; i < k; i++) {
+	for (size_t i = 0; i < k; i++) 
+    {
 		int t; 
 		const char *name = Fl::get_font_name((Fl_Font)i,&t);
-		if (t==0 ) {
-			fontobj->add(name, (void *)i);
-			if ( strcmp(fontname, name)==0 ) { 
-				fontobj->select(fontobj->size());
-				fontnum = i;
-			}
-			int *s;
-			int n = Fl::get_font_sizes((Fl_Font)i, s);
-			numsizes[i] = n;
-			if (n) {
-				sizes[i] = new int[n];
-				for (int j=0; j<n; j++) sizes[i][j] = s[j];
-			}
-		}
+        if ( name != NULL )
+        {
+            if ( ( t == 0 ) && ( name[0] != '@' ) )
+            {
+#ifdef DEBUG
+                printf( "font insert = %s [%d]\n", name, t );
+                fflush( stdout );
+#endif
+                fontobj->add(name, (void *)i);
+                if ( strcmp(fontname, name)==0 ) 
+                { 
+                    fontobj->select(fontobj->size());
+                    fontnum = i;
+                }
+
+                int *s;
+                int n = Fl::get_font_sizes((Fl_Font)i, s);
+                numsizes[i] = n;
+                if ( n ) 
+                {
+                    sizes[i] = new int[n];
+
+                    for (int j=0; j<n; j++) 
+                    {
+                        sizes[i][j] = s[j];
+                    }
+                }
+            }
+        }
 	}
 }
 
@@ -851,33 +868,43 @@ const char *HOMEDIR = "USERPROFILE";
 const char *HOMEDIR = "HOME";
 #endif
 const char *DICTFILE = ".FLTerm";
+
 void load_dict()			
 {
 	FILE *fp = fopen(DICTFILE, "r");
-	if ( fp==NULL ) {// current directory doesn't have .hist
-		if ( fl_chdir(getenv(HOMEDIR))==0 ) {
+	if ( fp==NULL ) 
+    {// current directory doesn't have .hist
+		if ( fl_chdir(getenv(HOMEDIR))==0 ) 
+        {
 			fp = fopen(DICTFILE, "r");
-			if ( fp==NULL ) {
+			if ( fp==NULL ) 
+            {
 				fp = fopen(".tinyTerm/tinyTerm.hist", "r");
 			}
 		}
 	}
-	if ( fp!=NULL ) {
+	if ( fp!=NULL ) 
+    {
 		char line[256];
-		while ( fgets(line, 256, fp)!=NULL ) {
+		while ( fgets(line, 256, fp)!=NULL ) 
+        {
 			line[strcspn(line, "\r\n")] = 0;
 			if ( *line=='~' ) {
-				if ( strncmp(line+1, "FontFace ", 9)==0 ) {
+				if ( strncmp(line+1, "FontFace ", 9)==0 ) 
+                {
 					strncpy(fontname, line+10, 255);
 					fontname[255]=0;
 				}
-				else if ( strncmp(line+1, "FontSize ", 9)==0 ) {
+				else if ( strncmp(line+1, "FontSize ", 9)==0 ) 
+                {
 					fontsize = atoi(line+10);
 				}
-				else if ( strncmp(line+1, "TermSize ", 9)==0 ) {
+				else if ( strncmp(line+1, "TermSize ", 9)==0 ) 
+                {
 					sscanf(line+10, "%dx%d", &termcols, &termrows);
 				}
-				else if ( strncmp(line+1, "WindowOpacity", 12)==0 ) {
+				else if ( strncmp(line+1, "WindowOpacity", 12)==0 ) 
+                {
 					opacity = atof(line+14);
 					Fl_Menu_Item * pItem = (Fl_Menu_Item *)
 									pMenuBar->find_item("Options/Transparency");
@@ -890,9 +917,11 @@ void load_dict()
 					pItem->set();
 				}
 			}
-			else {
+			else 
+            {
 				pCmd->add(line);
-				if ( *line=='!' ) {
+				if ( *line=='!' ) 
+                {
 					if (strncmp(line+1, "ssh ",   4)==0 ||
 						strncmp(line+1, "sftp ",  5)==0 ||
 						strncmp(line+1, "telnet ",7)==0 ||
@@ -902,12 +931,14 @@ void load_dict()
 												line+1, 0, menu_host_cb);
 						pHostname->add(strchr(line+1, ' ')+1);
 					}
-					else if (strncmp(line+1, "script ", 7)==0 ) {
+					else if (strncmp(line+1, "script ", 7)==0 ) 
+                    {
 						pMenuBar->insert(pMenuBar->find_index("Options")-1,
 											fl_filename_name(line+8), 0,
 											script_cb, strdup(line+8));
 					}
-					else if ( strncmp(line+1, "Boot ", 5)==0 ) {
+					else if ( strncmp(line+1, "Boot ", 5)==0 ) 
+                    {
 						script_open(line+6);
 					}
 				}
