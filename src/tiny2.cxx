@@ -1000,7 +1000,7 @@ int main(int argc, char **argv)
             pMenuBar->textsize(MENUHEIGHT - 2);
         }
         pMenuBar->textcolor(DEFAULT_LABELCOLOR);
-#ifdef __APPLE__
+#ifndef __APPLE__
 		pMenuBar->about(about_cb, NULL);
 #endif /// of __APPLE__
 		pTerm = new Fl_Term(0, MENUHEIGHT, pWindow->w(),

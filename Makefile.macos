@@ -9,7 +9,7 @@ LIBS += ${LIBCRYPTO}
 LIBS += ${LIBSSH2}
 
 CFLAGS += -std=c++11 ${shell fltk-config --cxxflags}
-CFLAGS += -I${INCSSH2}
+CFLAGS += -I${INCSSH2} -Ires
 LDFLAGS = ${shell fltk-config --ldstaticflags} -lstdc++ -lz 
 
 TARGET=bin/tinyTerm2
