@@ -1,10 +1,12 @@
 #!/bin/bash
-# Automatic version updater for Mac OS  from src/tiny2.cxx
+# Automatic version updater for Mac OS  from res/resource.h
 # Script by rageworx@gmail.com
 
-VER_GREP=`grep APP_VERSION_STR res/resouce.h`
+VER_GREP=`grep APP_VERSION_STR res/resource.h`
 VER_ARR=($VER_GREP)
 VER_STR=`echo ${VER_ARR[2]} | sed "s/\"//g"`
+
+echo "(debug)VER_ARR=${VER_GREP}"
 
 APP_NAME="FLTermEx.app"
 IP_SRC="bin/${APP_NAME}/Contents/Info.plist"
