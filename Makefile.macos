@@ -15,6 +15,16 @@ LDFLAGS = ${shell fltk-config --ldstaticflags} -lstdc++ -lz
 TARGET=bin/tinyTerm2
 PACKAGE=bin/FLTermEx.app
 
+# Automatic detecting architecture.
+KRNL := $(shell uname -s)
+KVER := $(shell uname -r | cut -d . -f1)
+ARCH := $(shell uname -m)
+
+ifeq ($(shell test $(KVER) -gt 19; echo $$?),0)
+    CFLAGS += -arch x86_64 -arch arm64
+    CFLAGS += -mmacosx-version-min=11.0
+endif
+
 all: prepare ${TARGET}
 
 prepare:
