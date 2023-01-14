@@ -1,11 +1,11 @@
 ## Introduction
 
-FLTerm(Fast Light Terminal, formally "tinyTerm2") is a simple small scriptable terminal emulator, with unique features like **command autocompletion**, **scp integration**, **batch automation**, and **scripting**. It is a rewrite of [tinyTerm](https://yongchaofan.github.io/tinyTerm) using C++, [FLTK](http://fltk.org), and [libssh2](http://libssh2.org). now cross platform with tabs support, and it is still very small, win64 executable is 825KB at current release, MacOS install package just 1.6MB
+FLTermEx (Fast Light Terminal Extra features) is a simple and small scriptable multi-platform terminal emulator for laptops and desktops, with unique features like **command autocompletion**, **scp integration**, **batch automation**, and **scripting**. It is a rewrite of [tinyTerm](https://yongchaofan.github.io/tinyTerm) using C++, [FLTK](http://fltk.org), and [libssh2](http://libssh2.org). now cross platform with tabs support.
 
-Stable release: |[2.1.0](https://github.com/yongchaofan/FLTerm) | License: | [GPL 3.0](https://github.com/yongchaofan/FLTerm/blob/master/LICENSE)
---- |:---:|:---:|:---:
-**PC install:** | [Microsoft Store](https://www.microsoft.com/store/apps/9NXGN9LJTL05) | [32bit EXE](https://github.com/yongchaofan/FLTerm/releases/download/2.1.0/FLTerm.exe) | [64bit EXE](https://github.com/yongchaofan/FLTerm/releases/download/2.1.0/FLTerm64.exe)
-**Mac install:** | [Apple store](https://apps.apple.com/us/app/id1522389053) | [FLTerm.pkg](https://github.com/yongchaofan/FLTerm/releases/download/2.1.0/FLTerm.pkg)
+## Release status
+- macOS supports minimal 11.0 (Big-Sur) as universal binary.
+- Windows x86.64 as non-installation required stand-alone PE image.
+- Linux, just clone and build, then run or install to system.
 
 <video width="960" height="540" controls>
 <source src="tinyTerm2.mp4" type="video/mp4">
@@ -16,42 +16,40 @@ Your browser does not support the video tag.
 
 ## Documentation
 
-> ### Making connections
-> A connection dialog will popup at the start of FLTerm, simply choose the protocol, type in port and ip address/hostname then press enter to make a connection. Each time a connection is make using dialog, an entry will be added to the Term menu, simply select the menu entry to make the same connection again. Six types of connections are supported: shell, serial, telnet, ssh, sftp and netconf, except that sandboxed Apple store app will block shell execution.
->
-> Once a connection is made, any key press will be transmitted to remote host, with response from host displayed in the terminal, most vt100/xterm escape sequences are supported, enough to work normally for top, vi, vttest etc. 
-> 
-> Press left mouse button and drag to select text, double click to select the whole word under mouse pointer, selected text will be copied to clipboard when mouse is moved out of the terminal window. When text is selected, right click will paste selected text into the same terminal, when no text is selected, right click will paste from clipboard.
->
-> Scroll back buffer holds 64K lines of text, scrollbar is hidden by default, which will appear when scrolled back, use page up/page down key or mouse wheel to scroll. The buffer can be saved to a text file at any time, or turn logging function to write all terminal output to a text file. 
->
-> ### Command history and autocompletion
-> 
-> Local Edit Mode was a feature on physical terminals used to save time on slow connections. On tinyTerm2 local edit mode is used to implement command history and command auto-completion, which is useful to help users remember long commands and save time on typing.
->
-> When local edit mode is enabled, key presses are not sent to remote host until "Enter", "Tab" or "?" key is pressed, and the input is auto completed using command history, user can also press "up" or "down" key to bring up the command history list, then select command from the list to send to host. Every command typed in local edit mode is added to command history, which saved to tinyTerm.hist at exit, then loaded into memory at the next start of tinyTerm. 
->  
-> Additionally when disconnected with local edit mode enabled, user is presented with a "FLTerm >" prompt, simply type commands like "telnet 192.168.1.1" or "ssh admin@172.16.1.1" to make conection
-> 
-> ### Transfer files to remote host
->
-> Drag and drop files to the terminal window will get the files transfered to remote host, placed in the current working directory
->
+### Making connections
+ A connection dialog will popup at the start of FLTerm, simply choose the protocol, type in port and ip address/hostname then press enter to make a connection. Each time a connection is make using dialog, an entry will be added to the Term menu, simply select the menu entry to make the same connection again. Six types of connections are supported: shell, serial, telnet, ssh, sftp and netconf, except that sandboxed Apple store app will block shell execution.
+ Once a connection is made, any key press will be transmitted to remote host, with response from host displayed in the terminal, most vt100/xterm escape sequences are supported, enough to work normally for top, vi, vttest etc. 
+ 
+ Press left mouse button and drag to select text, double click to select the whole word under mouse pointer, selected text will be copied to clipboard when mouse is moved out of the terminal window. When text is selected, right click will paste selected text into the same terminal, when no text is selected, right click will paste from clipboard.
+
+ Scroll back buffer holds 64K lines of text, scrollbar is hidden by default, which will appear when scrolled back, use page up/page down key or mouse wheel to scroll. The buffer can be saved to a text file at any time, or turn logging function to write all terminal output to a text file. 
+
+### Command history and autocompletion
+ 
+ Local Edit Mode was a feature on physical terminals used to save time on slow connections. On tinyTerm2 local edit mode is used to implement command history and command auto-completion, which is useful to help users remember long commands and save time on typing.
+
+ When local edit mode is enabled, key presses are not sent to remote host until "Enter", "Tab" or "?" key is pressed, and the input is auto completed using command history, user can also press "up" or "down" key to bring up the command history list, then select command from the list to send to host. Every command typed in local edit mode is added to command history, which saved to tinyTerm.hist at exit, then loaded into memory at the next start of tinyTerm. 
+  
+ Additionally when disconnected with local edit mode enabled, user is presented with a "FLTerm >" prompt, simply type commands like "telnet 192.168.1.1" or "ssh admin@172.16.1.1" to make conection
+ 
+### Transfer files to remote host
+ Drag and drop files to the terminal window will get the files transfered to remote host, placed in the current working directory
+ 
 	on ssh connection files are copied via scp
 	on sftp connection files are copied via sftp put
 	on netconf connection the files content will be sent as xml
 	on serial connection first file will be sent using xmodem protocol
     
->only send function of the original xmodem protocol is supported, CRC optional. This is added to support bootstraping of MCUs on embeded system like Ardiuno
-> 
-> ### Task Automation with batch commands
->
-> To automate tasks, simply drag and drop a list of commands to the terminal, tinyTerm send one command at a time, wait for prompt string before sending the next command, to avoid overflowing the receive buffer of the remote host or network device. 
-> 
-> Most command line interface system uses a prompt string to tell user it’s ready for the next command, for example "> " or "$ " used by Cisco routers. tinyTerm will auto detect the prompt string used by remote host when a batch is dropped. Additionally, prompt string can be set in the script using command "!Prompt {str}", refer to appendix A for details and other special commands supported for scripting.
->
-> A few local command like "Wait", "Clear", "Log" etc to enance the automation, the example below automate the task of connecting to a host, list some files, run top and log everthing to a file
->
+only send function of the original xmodem protocol is supported, CRC optional. This is added to support bootstraping of MCUs on embeded system like Ardiuno
+ 
+### Task Automation with batch commands
+
+ To automate tasks, simply drag and drop a list of commands to the terminal, tinyTerm send one command at a time, wait for prompt string before sending the next command, to avoid overflowing the receive buffer of the remote host or network device. 
+ 
+ Most command line interface system uses a prompt string to tell user it’s ready for the next command, for example "> " or "$ " used by Cisco routers. tinyTerm will auto detect the prompt string used by remote host when a batch is dropped. Additionally, prompt string can be set in the script using command "!Prompt {str}", refer to appendix A for details and other special commands supported for scripting.
+
+ A few local command like "Wait", "Clear", "Log" etc to enance the automation, the example below automate the task of connecting to a host, list some files, run top and log everthing to a file
+
 	!Prompt $%20
 	!Log top.log
 	!ssh pi@192.168.12.8
@@ -62,7 +60,7 @@ Your browser does not support the video tag.
 	exit	
 
 ## Scripting interface
-> More complex automation is facilited through the xmlhttp interface, a built in HTTPd listens at 127.0.0.1:8080, and will accept GET request from local machine, which means any program running on the same machine, be it a browser or a javascript or any program that supports xmlhttp interface, can connect to tinyTerm and request either a file or the result of a command, 
+ More complex automation is facilited through the xmlhttp interface, a built in HTTPd listens at 127.0.0.1:8080, and will accept GET request from local machine, which means any program running on the same machine, be it a browser or a javascript or any program that supports xmlhttp interface, can connect to tinyTerm and request either a file or the result of a command, 
 
 for example:
 
@@ -82,7 +80,7 @@ function xmlhttp(cmd) {
 	return xhr.responseText;
 }
 ```
-> 
+ 
 The following commands can be used programatically for scripting
 
     !/bin/bash          start local shell, on Windows try "ping 192.168.1.1"
