@@ -1,7 +1,6 @@
-theme: jekyll-theme-cayman
+theme: jekyll-theme-Hacker
 show_downloads: true
 github:
-  apple_url: https://apps.apple.com/us/app/id1522389053
-  microsoft_url: https://www.microsoft.com/store/apps/9NXGN9LJTL05
-  zip_url: https://github.com/yongchaofan/FLTerm/releases/download/2.0.0/FLTerm-2.0.0.zip
-  description: fast light terminal emulator
+  apple_url: https://github.com/rageworx/FLTermEx/releases/download/v2.2.1.8/FLTermEx-macOS11-aarch64-v2.2.1.8.zip
+  zip_url: https://github.com/rageworx/FLTermEx/releases/download/v2.2.1.8/FLTermEx_Win32_x86_64_v2.2.1.8_selfsigned.zip
+  description: fast light terminal extra fatured emulator
