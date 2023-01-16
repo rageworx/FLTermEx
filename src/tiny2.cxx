@@ -50,6 +50,7 @@
 #include <FL/Fl_Sys_Menu_Bar.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Native_File_Chooser.H>
+#include <FL/Fl_Preferences.H>
 
 #include "resource.h"
 
@@ -67,6 +68,13 @@
 #endif
 
 #define DEFAULT_APP_TITLE	"FLTermEx"
+#define DEFAULTFONTSIZE	    12
+#define DEFAULTROWS			25
+#define DEFAULTCOLUMNS		80
+
+#ifndef _MAX_PATH
+	#define _MAX_PATH		512
+#endif
 
 const char ABOUT_TERM2[]="\r\n\n\
 \tFLTermEx is a simple, small, scriptable terminal emulator,\r\n\n\
@@ -93,9 +101,9 @@ Fl_Sys_Menu_Bar*	pMenuBar = nullptr;
 Fl_Font 			fontnum = FL_COURIER;
 
 static char fontname[256] = DEFAULTFONT;
-static int fontsize = 12;
-static int termcols = 80;
-static int termrows = 25;
+static int fontsize = DEFAULTFONTSIZE;
+static int termcols = DEFAULTCOLUMNS;
+static int termrows = DEFAULTROWS;
 static bool sendtoall = false;
 static bool local_edit = false;
 static double opacity = 1.0;
@@ -509,22 +517,28 @@ void connect_dlg_build()
     {
         pConnectDlg->color(DEFAULT_COLOR);
         pConnectDlg->labelcolor(DEFAULT_LABELCOLOR);
+
         pProtocol = new Fl_Choice(100,20,192,24, "Protocol:");
         pProtocol->color( fl_darker( pConnectDlg->color() ) );
         pProtocol->labelcolor( pConnectDlg->labelcolor() );
         pProtocol->textcolor( pConnectDlg->labelcolor() );
+
         pPort = new Fl_Input_Choice(100,60,192,24, "Port:");
         pPort->color( fl_darker( pConnectDlg->color() ) );
         pPort->labelcolor( pConnectDlg->labelcolor() );
+
         pHostname = new Fl_Input_Choice(100,100,192,24,"Host:");
         pHostname->color( fl_darker( pConnectDlg->color() ) );
         pHostname->labelcolor( pConnectDlg->labelcolor() );
+
         pConnect = new Fl_Button(200,160,80,24, "Connect");
         pConnect->color( fl_darker( pConnectDlg->color() ) );
         pConnect->labelcolor( pConnectDlg->labelcolor() );
+
         pCancel = new Fl_Button(80,160,80,24, "Cancel");
         pCancel->color( fl_darker( pConnectDlg->color() ) );
         pCancel->labelcolor( pConnectDlg->labelcolor() );
+
         pProtocol->textsize(fontsize); 
         pProtocol->labelsize(fontsize);
         pHostname->textsize(fontsize); 
@@ -544,6 +558,7 @@ void connect_dlg_build()
         pConnect->callback(connect_cb);
         pCancel->callback(cancel_cb);
     }
+
     pConnectDlg->end();
     pConnectDlg->set_modal();
 }
@@ -578,26 +593,36 @@ void font_cb(Fl_Widget *, long)
     sizeobj->clear();
     int n = numsizes[fontnum];
     int *s = sizes[fontnum];
-    if (!n) {// no sizes
-    } 
-    else if (s[0] == 0) {// many sizes;
+    if ( ( n > 0 ) && (s[0] == 0) )
+	{	// many sizes;
         int j = 1;
-        for (int i=6; i<=32 || i<s[n-1]; i++) {
+        for (int i=6; i<=32 || i<s[n-1]; i++) 
+		{
             char buf[20] = {0};
             snprintf(buf,20,"%d",i);
             sizeobj->add(buf);
             if ( i==fontsize ) sizeobj->value(sizeobj->size());
         }
     } 
-    else {// some sizes
+    else 
+	{	// some sizes
         int w = 0;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) 
+		{
             char buf[20] = {0};
             snprintf(buf,20,"@b%d",s[i]);
             sizeobj->add(buf);
             if ( s[i]==fontsize ) sizeobj->value(sizeobj->size());
         }
     }
+
+	int t = 0;
+	const char* fface = Fl::get_font_name(fontnum, &t);
+	if ( fface != nullptr )
+	{
+		if ( strcmp( fontname, fface ) != 0 )
+			strncpy( fontname, fface, 256 );
+	}
 }
 
 void size_cb(Fl_Widget *, long) 
@@ -1012,6 +1037,119 @@ const char *DICTFILE = ".FLTerm";
 
 // Improvement issue:
 // load_dict() need to use Fl_Preference.
+#if 1
+void load_dict()
+{
+	Fl_Preferences cfg( Fl_Preferences::USER_L, 
+	                    DEFAULT_APP_TITLE,
+						DEFAULT_APP_TITLE );
+
+	cfg.get( "FontFace", (char*)fontname , DEFAULTFONT, 80 );
+	cfg.get( "FontSize", fontsize, DEFAULTFONTSIZE );
+	cfg.get( "TermSize.Columm", termcols, DEFAULTCOLUMNS );
+	cfg.get( "TermSize.Row", termrows, DEFAULTROWS );
+	cfg.get( "WindowOpacity", opacity, 1.f );
+
+	if ( pWindow != nullptr )
+	{
+		int winL = pWindow->x();
+		int winT = pWindow->y();
+		int winW = pWindow->w();
+		int winH = pWindow->h();
+		cfg.get( "WindowPosition.Left", winL, winL );
+		cfg.get( "WindowPosition.Top", winT, winT );
+		cfg.get( "WindowPosition.Width", winW, winW );
+		cfg.get( "WindowPosition.Height", winH, winH );
+		pWindow->resize( winL, winT, winW, winH );
+	}
+	
+	int  conSize = 0;
+	cfg.get( "Connections", conSize, 0 );
+	if( conSize > 0 )
+	{
+		for ( int cnt=0; cnt<conSize; cnt++ )
+		{
+			char conType[40] = {0};
+			char conValue[40] = {0};
+			char rmap[40] = {0};
+			snprintf( rmap, 40, "Connection[%d].Type", cnt );
+			cfg.get( rmap, conType, NULL, 40 );
+			snprintf( rmap, 40, "Conection[%d].Value", cnt );
+			cfg.get( rmap, conValue, NULL, 40 );
+
+			if ( strlen( conValue ) > 0 )
+			{
+				if ( strncmp( conType, "ssh ",   4)==0 ||
+					strncmp( conType, "sftp ",  5)==0 ||
+					strncmp( conType, "telnet ",7)==0 ||
+					strncmp( conType, "serial ",7)==0 ||
+					strncmp( conType, "netconf ",8)==0 ) 
+				{
+					pMenuBar->insert( pMenuBar->find_index("Script")-1,
+									  conType, 0, menu_host_cb );
+					pHostname->add( conValue );
+				}
+			}
+		}
+
+		pHostname->value( pHostname->menu()->size() - 1 );
+	}
+
+	int scpSize = 0;
+	cfg.get( "Scripts", scpSize, 0 );
+	if ( scpSize > 0 )
+	{
+		for ( int cnt=0; cnt<scpSize; cnt++ )
+		{
+			char scpValue[_MAX_PATH] = {0};
+			char rmap[40] = {0};
+			snprintf( rmap, 40, "Script[%d]", cnt );
+			cfg.get( rmap, scpValue, NULL, _MAX_PATH );
+
+			if ( strlen( scpValue ) > 0 )
+			{
+				pMenuBar->insert( pMenuBar->find_index("Options")-1,
+								   fl_filename_name( scpValue ), 0,
+								   script_cb, strdup( scpValue ) );
+			}
+		}
+	}
+
+	char bootfn[_MAX_PATH] = {0};
+	cfg.get( "Boot", bootfn, 0, _MAX_PATH );
+	if ( strlen( bootfn ) > 0 )
+	{
+		script_open( bootfn );
+	}
+}
+
+void save_dict()
+{
+	Fl_Preferences cfg( Fl_Preferences::USER_L, 
+	                    DEFAULT_APP_TITLE,
+						DEFAULT_APP_TITLE );
+
+	if ( pTerm != NULL )
+	{
+		termcols = pTerm->sizeX();
+		termrows = pTerm->sizeY();
+	}
+
+	cfg.set( "FontFace", fontname );
+	cfg.set( "FontSize", fontsize );
+	cfg.set( "TermSize.Columm" , termcols );
+	cfg.set( "TermSize.Row", termrows );
+	cfg.set( "WindowOpacity", opacity );
+
+	if ( pWindow != nullptr )
+	{
+		cfg.set( "WindowPosition.Left", pWindow->x() );
+		cfg.set( "WindowPosition.Top", pWindow->y() );
+		cfg.set( "WindowPosition.Width", pWindow->w() );
+		cfg.set( "WindowPosition.Height", pWindow->h() );
+	}
+}
+#else
 void load_dict()
 {
     FILE *fp = fopen(DICTFILE, "r");
@@ -1094,6 +1232,7 @@ void load_dict()
         fclose(fp);
     }
 }
+
 void save_dict()
 {
     FILE *fp = fopen(DICTFILE, "w");
@@ -1105,7 +1244,7 @@ void save_dict()
         fprintf(fp, "~FontFace %s\n", Fl::get_font_name(fontnum, &t));
         fprintf(fp, "~FontSize %d\n", fontsize);
 
-        if ( local_edit ) 
+        if ( local_edit )
 			fprintf(fp, "~LocalEdit\n");
         
 		if ( opacity!=1.0 ) 
@@ -1122,6 +1261,8 @@ void save_dict()
         fclose(fp);
     }
 }
+#endif /// of 1
+
 void redraw_cb(void *)
 {
     if ( pTerm->pending() ) 
