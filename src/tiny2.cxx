@@ -26,6 +26,16 @@
 #include "Fl_Term.h"
 #include "Fl_Browser_Input.h"
 
+// prevent to macOS11 OpenGL deprecation warnings - 
+// macOS13 still supports OpenGL as well for now .
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <FL/platform.H>
 #include <FL/Fl.H>
 #include <FL/fl_ask.H>
