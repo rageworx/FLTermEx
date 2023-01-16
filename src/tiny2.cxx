@@ -1060,9 +1060,18 @@ void load_dict()
 		cfg.get( "WindowPosition.Top", winT, winT );
 		cfg.get( "WindowPosition.Width", winW, winW );
 		cfg.get( "WindowPosition.Height", winH, winH );
-		pWindow->resize( winL, winT, winW, winH );
+
+		if ( pTerm != nullptr )
+		{
+			pWindow->position( winL, winT );
+			resize_window( termcols, termrows );
+		}
+		else
+		{
+			pWindow->resize( winL, winT, winW, winH );
+		}
 	}
-	
+
 	int  conSize = 0;
 	cfg.get( "Connections", conSize, 0 );
 	if( conSize > 0 )

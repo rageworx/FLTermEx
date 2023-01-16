@@ -245,7 +245,7 @@ int sshHost::ssh_knownhost()
 	if ( strlen( knownhostfile ) == 0 )
 	{
 #ifdef _WIN32
-		snprintf( knownhostfile, 512, "%s/%s", 
+		snprintf( knownhostfile, 512, "%s\\%s", 
 		          getenv( "USERPROFILE" ),
 		          DEFAULT_SSH_HOSTFILE );
 #else
@@ -255,11 +255,18 @@ int sshHost::ssh_knownhost()
 #endif
 	}
 
-	if ( stat(knownhostfile, &sb)==-1 ) {
+	if ( stat(knownhostfile, &sb)==-1 ) 
+	{
 #ifdef WIN32
-		mkdir(".ssh");
+		char tmpdir[512] = {0};
+		snprintf( tmpdir, 512, "%s\\.ssh",
+		          getenv( "USERPROFILE" ) );
+		mkdir( tmpdir );
 #else
-		mkdir(".ssh", 0700);
+		char tmpdir[512] = {0};
+		snprintf( tmpdir, 512, "%s/.ssh",
+		          getenv( "HOME" ) );
+		mkdir( tmpdir, 0700 );
 #endif
 	}
 	struct libssh2_knownhost *host;
@@ -329,47 +336,110 @@ static void kbd_callback(const char *name, int name_len,
 		}
 	}
 }
-const char *pubkeys[] = {".ssh/id_ed25519.pub", ".ssh/id_ecdsa.pub",
-						".ssh/id_rsa.pub" };
-const char *privkeys[] = {".ssh/id_ed25519", ".ssh/id_ecdsa", ".ssh/id_rsa"};
+
+#ifdef _WIN32
+const char *pubkeys[] = { 
+	".ssh\\id_ed25519.pub", 
+	".ssh\\id_ecdsa.pub",
+	".ssh\\id_rsa.pub" 
+};
+
+const char *privkeys[] = {
+	".ssh\\id_ed25519", 
+	".ssh\\id_ecdsa", 
+	".ssh\\id_rsa"
+};
+#else
+const char *pubkeys[] = { 
+	".ssh/id_ed25519.pub", 
+	".ssh/id_ecdsa.pub",
+	".ssh/id_rsa.pub" 
+};
+
+const char *privkeys[] = {
+	".ssh/id_ed25519", 
+	".ssh/id_ecdsa", 
+	".ssh/id_rsa"
+};
+#endif /// of _WIN32
+
 int sshHost::ssh_authentication()
 {
 	int rc = -5;
-	if ( *username==0 ) {
+	
+	if ( *username==0 ) 
+	{
 		const char *p = term_gets("\r\nusername: ", true);
 		if ( p==NULL ) return rc;
 		if ( *p==0 ) return rc;
 		strncpy(username, p, 31);
 	}
+
 	char *authlist=libssh2_userauth_list(session, username, strlen(username));
-	if ( authlist==NULL ) return 0;	// null authentication passed
-	if ( *password && strstr(authlist, "password")!=NULL ) {
+	
+	if ( authlist==NULL ) 
+		return 0;	// null authentication passed
+
+	if ( *password && strstr(authlist, "password")!=NULL ) 
+	{
 		if ( !libssh2_userauth_password(session, username, password) )
 			rc = 0;		//password authentication pass
 		else	// password provided, it either works or not
 			return rc;	//won't try anyting else on failure
 	}
-	if ( rc!=0 && strstr(authlist, "publickey")!=NULL ) {
+
+	if ( rc!=0 && strstr(authlist, "publickey")!=NULL ) 
+	{
 		struct stat buf;
-		for ( int i=0; i<3; i++ ) {
-			if ( stat(privkeys[i], &buf)==0 ) {
+		for ( int i=0; i<3; i++ ) 
+		{
+			char privfn[512] = {0};
+#ifdef _WIN32
+			snprintf( privfn, 512, "%s\\%s",
+			          getenv( "USERPROFILE" ),
+					  privkeys[i] );
+#else
+			snprintf( privfn, 512, "%s/%s",
+			          getenv( "HOME" ),
+					  privkeys[i] );
+#endif /// of _WIN32
+			if ( stat( privfn, &buf )==0 ) 
+			{
+				char pubfn[512] = {0};
+#ifdef _WIN32
+				snprintf( pubfn, 512, "%s\\%s",
+						getenv( "USERPROFILE" ),
+						pubkeys[i] );
+#else
+				snprintf( pubfn, 512, "%s/%s",
+						getenv( "HOME" ),
+						pubkeys[i] );
+#endif /// of _WIN32
+
 				if ( !libssh2_userauth_publickey_fromfile(session,
-						username, pubkeys[i], privkeys[i], passphrase) ) {
-					print("\033[32mpublic key(%s) authenticated\r\n", 
-													privkeys[i]+8);
+					  username, pubfn, privfn, passphrase) ) 
+				{
+					print( "\033[32mpublic key(%s) authenticated\r\n", 
+						   pubfn );
 					rc=0;
 					break;
 				}
 			}
 		}
 	}
-	if ( rc!=0 && strstr(authlist, "password")!=NULL ) {
+
+	if ( rc!=0 && strstr(authlist, "password")!=NULL ) 
+	{
 		//password was not set, get it interactively
-		for ( int i=0; i<3; i++ ) {
+		for ( int i=0; i<3; i++ ) 
+		{
 			const char *p = term_gets("password: ", false);
-			if ( p!=NULL ) {
+			if ( p!=NULL ) 
+			{
 				strncpy(password, p, 31);
-				if (!libssh2_userauth_password(session,username,password)) {
+
+				if (!libssh2_userauth_password(session,username,password)) 
+				{
 					rc=0;//password authentication passed
 					break;
 				}
@@ -378,10 +448,14 @@ int sshHost::ssh_authentication()
 				term_puts("\r\n", 2);
 		}
 	}
-	else if ( rc!=0 && strstr(authlist, "keyboard-interactive")!=NULL ) {
-		for ( int i=0; i<3; i++ ) {
+	else 
+	if ( rc!=0 && strstr(authlist, "keyboard-interactive")!=NULL ) 
+	{
+		for ( int i=0; i<3; i++ ) 
+		{
 			if (!libssh2_userauth_keyboard_interactive(session, username,
-														&kbd_callback) ) {
+														&kbd_callback) ) 
+			{
 				print("\033[32mkeyboard interactive authenticated\r\n");
 				rc=0;
 				break;
@@ -404,10 +478,12 @@ int sshHost::wait_socket()
 	if ( dir & LIBSSH2_SESSION_BLOCK_OUTBOUND ) wfd = &fds;
 	return select(sock+1, rfd, wfd, NULL, &tv);
 }
+
 const char *IETF_HELLO="<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <hello xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">\
 <capabilities><capability>urn:ietf:params:netconf:base:1.0</capability>\
 </capabilities></hello>]]>]]>";
+
 int sshHost::read()
 {
 	status(HOST_CONNECTING);
