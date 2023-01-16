@@ -24,7 +24,7 @@
 #include "ssh2.h"
 #include <thread>
 
-#ifndef WIN32
+#ifndef _WIN32
 	#include <pwd.h>
 	#include <dirent.h>
 	#include <fnmatch.h>
@@ -32,18 +32,22 @@
 #else
 	#define getcwd _getcwd
 	#include <shlwapi.h>
+
 int wchar_to_utf8(WCHAR *wbuf, int wcnt, char *buf, int cnt)
 {
 	return WideCharToMultiByte(CP_UTF8, 0, wbuf, wcnt, buf, cnt, NULL, NULL);
 }
+
 int utf8_to_wchar(const char *buf, int cnt, WCHAR *wbuf, int wcnt)
 {
 	return MultiByteToWideChar(CP_UTF8, 0, buf, cnt, wbuf, wcnt);
 }
+
 int fnmatch( char *pattern, char *file, int flag)
 {
 	return PathMatchSpecA(file, pattern) ? 0 : 1;
 }
+
 /****************************************************************************
   local dirent implementation for compiling on vs2017
 ****************************************************************************/
@@ -117,15 +121,29 @@ int closedir(DIR *dir)
 	}
 	return 0;
 }
-#endif //WIN32
+#endif /// of _WIN32
+
+#ifdef _WIN32
+#define DEFAULT_SSH_HOSTFILE	".ssh\\known_hosts"
+#else
+#define DEFAULT_SSH_HOSTFILE	".ssh/known_hosts"
+#endif 
 
 static const char *errmsgs[] = {
-"Disconnected", "Connection", "Session failure",
-"Verification failure", "Authentication failure",
-"Channel failure", "pty failure", "Shell failure", "Subsystem failure"
+	"Disconnected", 
+	"Connection", 
+	"Session failure",
+	"Verification failure", 
+	"Authentication failure",
+	"Channel failure", 
+	"pty failure", 
+	"Shell failure", 
+	"Subsystem failure"
 };
 
+static char knownhostfile[512] = {0};
 const char *kb_gets(const char *prompt, int echo);	//define in tiny2.cxx
+
 sshHost::sshHost(const char *name) : tcpHost(name)
 {
 	port = 0;
@@ -200,7 +218,7 @@ sshHost::sshHost(const char *name) : tcpHost(name)
 const char *keytypes[] = {
 	"unknown", "rsa", "dss", "ecdsa256", "ecdsa384", "ecdsa521", "ed25519"
 };
-const char *knownhostfile=".ssh/known_hosts";
+
 int sshHost::ssh_knownhost()
 {
 	int type, check, buff_len;
@@ -222,6 +240,21 @@ int sshHost::ssh_knownhost()
 	if ( nh==NULL ) return -4;
 
 	struct stat sb;
+
+	// check knownhostfile ...
+	if ( strlen( knownhostfile ) == 0 )
+	{
+#ifdef _WIN32
+		snprintf( knownhostfile, 512, "%s/%s", 
+		          getenv( "USERPROFILE" ),
+		          DEFAULT_SSH_HOSTFILE );
+#else
+		snprintf( knownhostfile, 512, "%s/%s", 
+		          getenv( "HOME" ),
+		          DEFAULT_SSH_HOSTFILE );
+#endif
+	}
+
 	if ( stat(knownhostfile, &sb)==-1 ) {
 #ifdef WIN32
 		mkdir(".ssh");
