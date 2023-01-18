@@ -71,7 +71,7 @@ if [ -e ${SRLIST[0]} ];then
 	SRLIST=(${SR})
 	if [ -e ${SRLIST[0]} ];then
 		echo -n "Checking libssl.a ... "
-		TESTPATH="${SRLIST[0]}/lib/libssl.a"
+		TESTPATH="${SRLIST[0]}lib/libssl.a"
 		if [ -e ${TESTPATH} ];then
 			echo "libssl found."
 			echo " ... at ${TESTPATH}"
@@ -82,7 +82,7 @@ if [ -e ${SRLIST[0]} ];then
 			exit 0
 		fi
 		echo -n "Checking libcrypto.a ... "
-		TESTPATH="${SRLIST[0]}/lib/libcrypto.a"
+		TESTPATH="${SRLIST[0]}lib/libcrypto.a"
 		if [ -e ${TESTPATH} ];then
 			echo "libcrypto found."
 			echo " ... at ${TESTPATH}"
