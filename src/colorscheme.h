@@ -1,11 +1,14 @@
 #ifndef __COLORSCHEME_H__
 #define __COLORSCHEME_H__
 
+#include <cstdint>
 #include <vector>
+
+#define COLORSCHEME_NAME_LEN        (80)
 
 typedef struct _SchemeColor
 {
-    char    name[40];
+    char    name[COLORSCHEME_NAME_LEN];
     float   alpha;
     float   red;
     float   green;
@@ -15,18 +18,19 @@ typedef struct _SchemeColor
 class ColorScheme
 {
     public:
-        ColorScheme( unsigned int bits = 8, const char* itcfn = nullptr );
+        ColorScheme( uint16_t bits = 8, const char* itcfn = nullptr );
         ~ColorScheme();
 
     public:
         // notice - 
         // RGBA16 meaning HDR10 or HDR10+ not padded color order. 
-        unsigned int Scheme2RGBA8( SchemeColor &scol );
-        unsigned long long Scheme2RGBA16( SchemeColor &scol );
+        uint32_t Scheme2RGBA8( SchemeColor &scol );
+        uint64_t Scheme2RGBA16( SchemeColor &scol );
 
     public:
         bool Load( const char* itcfn = nullptr );
         void Unload();
+        size_t size();
 
     public:
         size_t findKey( const char* kn, bool exac = false );
@@ -37,7 +41,7 @@ class ColorScheme
         void   initColor( SchemeColor &scol );
 
     protected:
-        unsigned int                color_bits;
+        uint16_t                    color_bits;
         std::vector< SchemeColor >  colors;
 };
 

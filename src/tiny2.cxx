@@ -27,7 +27,6 @@
 #include "ssh2.h"
 #include "Fl_Term.h"
 #include "Fl_Browser_Input.h"
-#include "colorscheme.h"
 
 // prevent to macOS11 OpenGL deprecation warnings - 
 // macOS13 still supports OpenGL as well for now .
@@ -1310,19 +1309,6 @@ void title_cb(void *)
 
 int main(int argc, char **argv)
 {
-#if 0
-    // test--
-    char itcfn[] =  "itermcolors/GitHub Dark.itermcolors";
-    ColorScheme sc(8);
-    if( sc.Load( itcfn ) == true )
-    {
-        printf( "%s load OK.\n", itcfn );
-    }
-    fflush( stdout );
-
-    return 0;
-#endif 
-
     httpd_init();
     libssh2_init(0);
     

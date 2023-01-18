@@ -6,10 +6,25 @@
 #include <tinyxml2.h>
 #include "colorscheme.h"
 
+////////////////////////////////////////////////////////////////////////////////
+
 using namespace tinyxml2;
 using namespace std;
 
-ColorScheme::ColorScheme( unsigned int bits, const char* itcfn )
+////////////////////////////////////////////////////////////////////////////////
+
+#define CC_STR_PLIST_ROOT       "plist"
+#define CC_STR_DICT             "dict"
+#define CC_STR_KEY              "key"
+#define CC_STR_REAL             "real"
+#define CC_STR_COMPO_ALPHA      "Alpha Component"
+#define CC_STR_COMPO_RED        "Red Component"
+#define CC_STR_COMPO_GREEN      "Green Component"
+#define CC_STR_COMPO_BLUE       "Blue Component"
+
+////////////////////////////////////////////////////////////////////////////////
+
+ColorScheme::ColorScheme( uint16_t bits, const char* itcfn )
   : color_bits( bits )
 {
     // fix color space error : 8 to 16 
@@ -35,16 +50,18 @@ bool ColorScheme::Load( const char* itcfn )
     if( xdoc.LoadFile( itcfn ) == XML_SUCCESS )
     {
         // find <plist> ...
-        XMLElement* pListRoot = xdoc.FirstChildElement( "plist" );
+        XMLElement* pListRoot = xdoc.FirstChildElement( CC_STR_PLIST_ROOT );
         if ( pListRoot == nullptr )
             return retb;
 
+        Unload();
+
         // find <dict> ...
-        XMLElement* pDictRoot = pListRoot->FirstChildElement( "dict" );
+        XMLElement* pDictRoot = pListRoot->FirstChildElement( CC_STR_DICT );
         if ( pDictRoot != nullptr )
         {
-            XMLElement* pKey = pDictRoot->FirstChildElement( "key" );
-            XMLElement* pDict = pDictRoot->FirstChildElement( "dict" );
+            XMLElement* pKey = pDictRoot->FirstChildElement( CC_STR_KEY );
+            XMLElement* pDict = pDictRoot->FirstChildElement( CC_STR_DICT );
 
             while( pKey != NULL )
             {
@@ -54,7 +71,7 @@ bool ColorScheme::Load( const char* itcfn )
     
                 const char* refKN = pKey->GetText();
                 if ( refKN != NULL )
-                    strncpy( newcol.name, refKN, 40 );
+                    strncpy( newcol.name, refKN, COLORSCHEME_NAME_LEN );
 
                 if( pDict != NULL )
                 {
@@ -67,15 +84,15 @@ bool ColorScheme::Load( const char* itcfn )
                     {
                         if ( kroll == 0 )
                         {
-                            pKA = pDict->FirstChildElement( "key" );
-                            pKR = pDict->FirstChildElement( "real" );
+                            pKA = pDict->FirstChildElement( CC_STR_KEY );
+                            pKR = pDict->FirstChildElement( CC_STR_REAL );
                         }
                         else
                         {
                             if ( pKA != NULL )
-                                pKA = pKA->NextSiblingElement( "key" );
+                                pKA = pKA->NextSiblingElement( CC_STR_KEY );
                             if ( pKA != NULL )
-                                pKR = pKA->NextSiblingElement( "real" );
+                                pKR = pKA->NextSiblingElement( CC_STR_REAL );
                         }
 
                         const char* refN = NULL;
@@ -97,22 +114,23 @@ bool ColorScheme::Load( const char* itcfn )
 #endif /// of DEBUG_PLIST_PARSE
                             string parseK = refN;
                             float  realFv = atof( refR );
-                            if ( parseK == "Alpha Component" )
+                            
+                            if ( parseK == CC_STR_COMPO_ALPHA )
                             {
                                 newcol.alpha = realFv;
                             }
                             else
-                            if ( parseK == "Blue Component" )
+                            if ( parseK == CC_STR_COMPO_BLUE )
                             {
                                 newcol.blue = realFv;
                             }
                             else
-                            if ( parseK == "Green Component" )
+                            if ( parseK == CC_STR_COMPO_GREEN )
                             {
                                 newcol.green = realFv;
                             }
                             else
-                            if ( parseK == "Red Component" )
+                            if ( parseK == CC_STR_COMPO_RED )
                             {
                                 newcol.red = realFv;
                             }
@@ -135,22 +153,23 @@ bool ColorScheme::Load( const char* itcfn )
                         Scheme2RGBA8( newcol ) );
                 fflush( stdout );
 #endif
-
                 // Step to next element --
                 if ( pKey != NULL )
-                    pKey  = pKey->NextSiblingElement( "key" );
+                    pKey  = pKey->NextSiblingElement( CC_STR_KEY );
                 if ( pDict != NULL )
-                    pDict = pDict->NextSiblingElement( "dict" );
+                    pDict = pDict->NextSiblingElement( CC_STR_DICT );
             }
         }
 
-        retb = true;
+        if ( colors.size() > 0 )
+            retb = true;
     }
+#ifdef DEBUG
     else
     {
         printf( "(debug)XML load failure = %s // ", itcfn );
     }
-
+#endif /// of DEBUG
     return retb;
 }
 
@@ -160,6 +179,11 @@ void ColorScheme::Unload()
     {
         colors.clear();
     }
+}
+
+size_t ColorScheme::size()
+{
+    return colors.size();
 }
 
 size_t ColorScheme::findKey( const char* kn, bool exac )
@@ -211,7 +235,7 @@ bool ColorScheme::getColor( const char* kn, SchemeColor &scol )
 
 void ColorScheme::initColor( SchemeColor &scol )
 {
-    memset( scol.name, 0, 40 );
+    memset( scol.name, 0, COLORSCHEME_NAME_LEN );
     scol.alpha = 1.f;
     scol.red = 0.f;
     scol.green = 0.f;
@@ -220,14 +244,14 @@ void ColorScheme::initColor( SchemeColor &scol )
 
 unsigned int ColorScheme::Scheme2RGBA8( SchemeColor &scol )
 {
-    unsigned int retcol_rgba = 0;
+    uint32_t retcol_rgba = 0;
 
     float fcbits = (float)color_bits;
 
-    unsigned char rv = (unsigned char)(scol.red * fcbits );
-    unsigned char gv = (unsigned char)(scol.green * fcbits );
-    unsigned char bv = (unsigned char)(scol.blue * fcbits );
-    unsigned char av = (unsigned char)(scol.alpha * fcbits );
+    uint8_t rv = (uint8_t)(scol.red * fcbits );
+    uint8_t gv = (uint8_t)(scol.green * fcbits );
+    uint8_t bv = (uint8_t)(scol.blue * fcbits );
+    uint8_t av = (uint8_t)(scol.alpha * fcbits );
 
     retcol_rgba = ( rv << 24 ) | ( gv << 16 ) | ( bv << 8 ) | av;
 
@@ -237,20 +261,20 @@ unsigned int ColorScheme::Scheme2RGBA8( SchemeColor &scol )
 unsigned long long ColorScheme::Scheme2RGBA16( SchemeColor &scol )
 {
     // 64bit length ...
-    unsigned long long retcol_hdr = 0;
+    uint64_t retcol_hdr = 0;
 
     float fcbits = (float)color_bits;
 
-    unsigned short rv = (unsigned char)(scol.red * fcbits );
-    unsigned short gv = (unsigned char)(scol.green * fcbits );
-    unsigned short bv = (unsigned char)(scol.blue * fcbits );
-    unsigned short av = (unsigned char)(scol.alpha * fcbits );
+    uint16_t rv = (uint8_t)(scol.red * fcbits );
+    uint16_t gv = (uint8_t)(scol.green * fcbits );
+    uint16_t bv = (uint8_t)(scol.blue * fcbits );
+    uint16_t av = (uint8_t)(scol.alpha * fcbits );
 
     // RED - GREEN - BLUE - ALPHA bits ( not padded ! )
     // 16  :  16   :   16 : 16   = 64 bits
-    retcol_hdr = ( (unsigned long long)rv << 48 ) 
-                 | ( (unsigned long long)gv << 32 ) 
-                 | ( (unsigned long long)bv << 16 ) | av;
+    retcol_hdr = ( (uint64_t)rv << 48 ) 
+                 | ( (uint64_t)gv << 32 ) 
+                 | ( (uint64_t)bv << 16 ) | av;
 
     return retcol_hdr;
 }
