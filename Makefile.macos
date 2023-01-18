@@ -1,6 +1,6 @@
 #Makefile for macOS with libssh2
 HEADERS = src/host.h src/ssh2.h src/Fl_Term.h src/Fl_Browser_Input.h
-OBJS = obj/tiny2.o obj/ssh2.o obj/host.o obj/Fl_Term.o obj/Fl_Browser_Input.o obj/cocoa_wrapper.o
+OBJS = obj/tiny2.o obj/ssh2.o obj/host.o obj/Fl_Term.o obj/Fl_Browser_Input.o obj/cocoa_wrapper.o obj/colorscheme.o
 
 ## referenced libraries for macOS with brew -
 include .config
@@ -12,9 +12,10 @@ CFLAGS += -std=c++11
 CFLAGS += ${shell fltk-config --cxxflags}
 CFLAGS += -I${INCSSH2} 
 CFLAGS += -Ires
+CFLAGS += -g3 -DDEBUG
 LDFLAGS = ${shell fltk-config --ldstaticflags} 
 LDFLAGS += -lstdc++
-#LDFLAGS += -ltinyxml2
+LDFLAGS += -ltinyxml2
 LDFLAGS += -lz
 
 TARGET=bin/tinyTerm2
