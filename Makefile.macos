@@ -8,11 +8,12 @@ LIBS += ${LIBSSL}
 LIBS += ${LIBCRYPTO}
 LIBS += ${LIBSSH2}
 
-CFLAGS  = -std=c++11 
+CFLAGS += -std=c++11 
 CFLAGS += ${shell fltk-config --cxxflags}
-CFLAGS += -I${INCSSH2} -Ires
-LDFLAGS  = ${shell fltk-config --ldstaticflags} 
-LDFALGS += -lstdc++
+CFLAGS += -I${INCSSH2} 
+CFLAGS += -Ires
+LDFLAGS = ${shell fltk-config --ldstaticflags} 
+LDFLAGS += -lstdc++
 #LDFLAGS += -ltinyxml2
 LDFLAGS += -lz
 
@@ -35,7 +36,7 @@ prepare:
 	@mkdir -p bin
 
 bin/tinyTerm2: ${OBJS} 
-	${CC} -o "$@" ${OBJS} ${LDFLAGS} ${LIBS}
+	@${CC} -o "$@" ${OBJS} ${LDFLAGS} ${LIBS}
 
 obj/cocoa_wrapper.o: src/cocoa_wrapper.mm
 	@${CC} ${CFLAGS} -c $< -o $@

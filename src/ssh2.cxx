@@ -17,18 +17,21 @@
 //     https://github.com/yongchaofan/tinyTerm2/issues/new
 //
 
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
+#include <thread>
+
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "ssh2.h"
-#include <thread>
 
 #ifndef _WIN32
 	#include <pwd.h>
 	#include <dirent.h>
 	#include <fnmatch.h>
-	#define Sleep(x) usleep((x)*1000);
+    #ifndef Sleep
+	    #define Sleep(x) usleep((x)*1000);
+    #endif /// of Sleep
 #else
 	#define getcwd _getcwd
 	#include <shlwapi.h>
@@ -159,32 +162,66 @@ sshHost::sshHost(const char *name) : tcpHost(name)
 	char *p = options;
 	char *phost=NULL, *pport=NULL, *psubsys=NULL;
 	char *puser=NULL, *ppass=NULL, *pphrase=NULL;
-	while ( (p!=NULL) && (*p!=0) ) {
-		while ( *p==' ' ) p++;
-		if ( *p=='-' ) {
-			switch ( p[1] ) {
-			case 'l': p+=3; puser = p; break;
-			case 'p': if ( p[2]=='w' ) { p+=4; ppass = p; }
-						if ( p[2]=='p' ) { p+=4; pphrase = p; }
-						break;
-			case 'P': p+=3; pport = p; break;
-			case 's': p+=3; psubsys = p; break;
+	while ( (p!=NULL) && (*p!=0) ) 
+    {
+		while ( *p==' ' ) 
+            p++;
+
+        if ( *p=='-' ) 
+        {
+			switch ( p[1] ) 
+            {
+                case 'l': 
+                    p+=3; 
+                    puser = p; 
+                    break;
+
+                case 'p': 
+                      if ( p[2]=='w' ) 
+                      { 
+                          p+=4; 
+                          ppass = p; 
+                      }
+                            
+                      if ( p[2]=='p' ) 
+                      { 
+                          p+=4; 
+                          pphrase = p; 
+                      }
+                      break;
+
+                case 'P': 
+                      p+=3; 
+                      pport = p; 
+                      break;
+
+                case 's': 
+                      p+=3; 
+                      psubsys = p; 
+                      break;
 			}
+
 			p = strchr( p, ' ' );
-			if ( p!=NULL ) *p++ = 0;
+			
+            if ( p!=NULL ) *p++ = 0;
 		}
-		else {
+		else 
+        {
 			phost = p;
 			p = strchr( phost, '@' );
-			if ( p!=NULL ) {
+			if ( p!=NULL ) 
+            {
 				puser = phost;
 				phost = p+1;
 				*p=0;
 			}
+
 			p = strchr(phost, ':');
-			if ( p!=NULL ) {
+			if ( p!=NULL ) 
+            {
 				char *p1 = strchr(p+1, ':');
-				if ( p1==NULL ) { //ipv6 address if more than one ':'
+				if ( p1==NULL ) 
+                {   //ipv6 address if more than one ':'
 					pport = p+1;
 					*p=0;
 				}
@@ -192,27 +229,40 @@ sshHost::sshHost(const char *name) : tcpHost(name)
 			break;
 		}
 	}
-	if ( phost!=NULL ) {
+
+	if ( phost!=NULL ) 
+    {
 		strncpy(hostname, phost, 127);
 		hostname[127]=0;
 	}
-	if ( psubsys!=NULL ) {
+
+	if ( psubsys!=NULL ) 
+    {
 		strncpy(subsystem, psubsys, 63);
 		subsystem[63]=0;
 	}
-	if ( pport!=NULL ) port = atoi(pport);
-	if ( puser!=NULL ) {
+
+	if ( pport!=NULL ) 
+        port = atoi(pport);
+
+	if ( puser!=NULL ) 
+    {
 		strncpy(username, puser, 63);
 		puser[63]=0;
 	}
-	if ( ppass!=NULL ) {
+
+	if ( ppass!=NULL ) 
+    {
 		strncpy(password, ppass, 63);
 		ppass[63]=0;
 	}
-	if ( pphrase!=NULL ) {
+
+	if ( pphrase!=NULL ) 
+    {
 		strncpy(passphrase, pphrase, 63);
 		pphrase[63]=0;
 	}
+
 	if ( port==0 ) port = (*subsystem==0)?22:830;
 }
 const char *keytypes[] = {
@@ -270,14 +320,15 @@ int sshHost::ssh_knownhost()
 #endif
 	}
 	struct libssh2_knownhost *host;
-	libssh2_knownhost_readfile(nh, knownhostfile,
-							   LIBSSH2_KNOWNHOST_FILE_OPENSSH);
-	check = libssh2_knownhost_check(nh, hostname, key, len,
+	libssh2_knownhost_readfile( nh, knownhostfile,
+							    LIBSSH2_KNOWNHOST_FILE_OPENSSH);
+	check = libssh2_knownhost_check( nh, hostname, key, len,
 								LIBSSH2_KNOWNHOST_TYPE_PLAIN|
 								LIBSSH2_KNOWNHOST_KEYENC_RAW, &host);
 	int rc = -4;
 	const char *p=NULL, *msg="Disconnected!";
-	switch ( check ) {
+	switch ( check ) 
+    {
 	case LIBSSH2_KNOWNHOST_CHECK_MATCH: rc=0; msg=""; break;
 	case LIBSSH2_KNOWNHOST_CHECK_MISMATCH:
 		if ( type==((host->typemask&LIBSSH2_KNOWNHOST_KEY_MASK)
@@ -321,6 +372,7 @@ int sshHost::ssh_knownhost()
 	libssh2_knownhost_free(nh);
 	return rc;
 }
+
 static void kbd_callback(const char *name, int name_len,
 						 const char *instruction, int instruction_len,
 						 int num_prompts,
